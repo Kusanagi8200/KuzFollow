@@ -72,16 +72,16 @@ curl --version
 jq --version
 
 # Install if needed (Ubuntu/Debian)
-sudo apt update
-sudo apt install curl jq
+ apt update
+ apt install curl jq
 
 # Install if needed (macOS with Homebrew)
 brew install curl jq
 
 # Install if needed (CentOS/RHEL/Fedora)
-sudo yum install curl jq
+ yum install curl jq
 # or
-sudo dnf install curl jq
+ dnf install curl jq
 ```
 
 ###  GitHub Token Setup
@@ -115,7 +115,7 @@ GITHUB_TOKEN="your_personal_access_token"
 
 ##  Usage
 
-### 🎬 Quick Start
+###  Quick Start
 
 ```bash
 # Run the script
