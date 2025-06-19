@@ -15,22 +15,6 @@
 
 ---
 
-##  Table of Contents
-
-- [ Overview](#-overview)
-- [ Features](#-features)
-- [ Installation](#-installation)
-- [ Usage](#-usage)
-- [ Configuration](#️-configuration)
-- [ Output Examples](#-output-examples)
-- [ Dependencies](#-dependencies)
-- [ Security](#️-security)
-- [ FAQ](#-faq)
-- [ Contributing](#-contributing)
-- [ License](#-license)
-
----
-
 ##  Overview
 
 The **GitHub Followers Analyzer** is an interactive Bash script that allows you to deeply analyze your GitHub relationships. It identifies who follows you, who you follow, and who doesn't follow you back, while offering automated actions to optimize your network.
