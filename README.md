@@ -1,4 +1,4 @@
-# 🔍 GitHub Followers Analyzer
+#  GitHub Followers Analyzer
 
 <div align="center">
 
@@ -15,27 +15,27 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
-- [🎯 Overview](#-overview)
-- [✨ Features](#-features)
-- [📦 Installation](#-installation)
-- [🚀 Usage](#-usage)
-- [⚙️ Configuration](#️-configuration)
-- [📊 Output Examples](#-output-examples)
-- [🔧 Dependencies](#-dependencies)
-- [🛡️ Security](#️-security)
-- [❓ FAQ](#-faq)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
+- [ Overview](#-overview)
+- [ Features](#-features)
+- [ Installation](#-installation)
+- [ Usage](#-usage)
+- [ Configuration](#️-configuration)
+- [ Output Examples](#-output-examples)
+- [ Dependencies](#-dependencies)
+- [ Security](#️-security)
+- [ FAQ](#-faq)
+- [ Contributing](#-contributing)
+- [ License](#-license)
 
 ---
 
-## 🎯 Overview
+##  Overview
 
 The **GitHub Followers Analyzer** is an interactive Bash script that allows you to deeply analyze your GitHub relationships. It identifies who follows you, who you follow, and who doesn't follow you back, while offering automated actions to optimize your network.
 
-### 🎪 Visual Demo
+###  Visual Demo
 
 ```
 ███████╗ ██████╗ ██╗     ██╗      ██████╗ ██╗    ██╗███████╗██████╗ ███████╗
@@ -48,37 +48,37 @@ The **GitHub Followers Analyzer** is an interactive Bash script that allows you 
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🔍 **Complete Analysis**
+###  **Complete Analysis**
 - ✅ **Bidirectional tracking**: Analyzes who follows you and who you follow
 - ✅ **Non-reciprocal detection**: Identifies accounts that don't follow you back
 - ✅ **Unfollowed followers**: Lists your followers you haven't followed back yet
 - ✅ **Detailed statistics**: Complete display of your GitHub metrics
 
-### 🤖 **Automated Actions**
-- 🔄 **Mass unfollowing**: Stop following non-reciprocal accounts
-- ➕ **Auto-follow**: Follow back your new followers
-- 📊 **Detailed reports**: Complete summaries after each action
-- ⏱️ **Rate limiting**: Automatic compliance with GitHub API limits
+###  **Automated Actions**
+-  **Mass unfollowing**: Stop following non-reciprocal accounts
+-  **Auto-follow**: Follow back your new followers
+-  **Detailed reports**: Complete summaries after each action
+-  **Rate limiting**: Automatic compliance with GitHub API limits
 
-### 📈 **Detailed Information**
-- 👤 **User profile**: Name, public repositories, statistics
-- 📚 **Repository list**: Overview of your public projects
-- 🎯 **Recent activity**: Latest GitHub events
-- 📅 **Follower history**: Account creation dates
+###  **Detailed Information**
+-  **User profile**: Name, public repositories, statistics
+-  **Repository list**: Overview of your public projects
+-  **Recent activity**: Latest GitHub events
+-  **Follower history**: Account creation dates
 
-### 🎨 **User Interface**
-- 🌈 **Colorful interface**: Intuitive navigation with color codes
-- 📱 **Interactive menu**: Simple and clear action choices
-- ⚡ **Real-time feedback**: Live operation progress
-- 🛡️ **Secure confirmations**: Protection against accidental actions
+###  **User Interface**
+-  **Colorful interface**: Intuitive navigation with color codes
+-  **Interactive menu**: Simple and clear action choices
+-  **Real-time feedback**: Live operation progress
+-  **Secure confirmations**: Protection against accidental actions
 
 ---
 
-## 📦 Installation
+##  Installation
 
-### 📋 Prerequisites
+###  Prerequisites
 
 Make sure you have the following tools installed:
 
@@ -102,7 +102,7 @@ sudo yum install curl jq
 sudo dnf install curl jq
 ```
 
-### 🔑 GitHub Token Setup
+###  GitHub Token Setup
 
 1. **Generate a Personal Access Token**:
    - Go to [GitHub Settings > Developer Settings > Personal Access Tokens](https://github.com/settings/tokens)
@@ -131,7 +131,7 @@ GITHUB_TOKEN="your_personal_access_token"
 
 ---
 
-## 🚀 Usage
+##  Usage
 
 ### 🎬 Quick Start
 
@@ -140,7 +140,7 @@ GITHUB_TOKEN="your_personal_access_token"
 ./FOLLOWERS.sh
 ```
 
-### 📖 Step-by-Step Guide
+###  Step-by-Step Guide
 
 1. **Launch the analyzer**:
    ```bash
@@ -164,9 +164,9 @@ GITHUB_TOKEN="your_personal_access_token"
 
 ---
 
-## ⚙️ Configuration
+## ⚙ Configuration
 
-### 🔧 Script Variables
+###  Script Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -174,7 +174,7 @@ GITHUB_TOKEN="your_personal_access_token"
 | `GITHUB_TOKEN` | Your personal access token | `"ghp_..."` |
 | `PER_PAGE` | Results per API page | `100` |
 
-### 🎨 Color Customization
+###  Color Customization
 
 The script uses ANSI color codes that you can customize:
 
@@ -189,9 +189,9 @@ CYAN='\033[0;36m'     # Highlights
 
 ---
 
-## 📊 Output Examples
+##  Output Examples
 
-### 📈 Sample Analysis Output
+###  Sample Analysis Output
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
@@ -222,7 +222,7 @@ FOLLOWERS YOU DON'T FOLLOW BACK:
 • follower3
 ```
 
-### 🎯 Action Menu
+###  Action Menu
 
 ```
 ACTION MENU:
@@ -238,7 +238,7 @@ Enter your choice [1-4]:
 
 ---
 
-## 🔧 Dependencies
+##  Dependencies
 
 | Tool | Purpose | Installation |
 |------|---------|--------------|
@@ -247,7 +247,7 @@ Enter your choice [1-4]:
 | **bash** | Script execution | Usually pre-installed |
 | **date** | Date formatting | Usually pre-installed |
 
-### 🧪 Testing Dependencies
+###  Testing Dependencies
 
 ```bash
 # Test script
@@ -260,9 +260,9 @@ command -v jq >/dev/null 2>&1 || echo "jq is missing"
 
 ---
 
-## 🛡️ Security
+##  Security
 
-### 🔐 Token Security
+###  Token Security
 
 - **Never commit your token** to version control
 - **Use environment variables** for sensitive data:
@@ -274,14 +274,14 @@ command -v jq >/dev/null 2>&1 || echo "jq is missing"
 - **Regularly rotate** your personal access tokens
 - **Use minimal permissions** (only `user:follow`, `read:user`)
 
-### ⚠️ Rate Limiting
+###  Rate Limiting
 
 The script automatically handles GitHub API rate limits:
 - **1 second delay** between follow/unfollow operations
 - **Automatic retries** on rate limit errors
 - **Progress indicators** for long operations
 
-### 🔒 Confirmation Requirements
+###  Confirmation Requirements
 
 All destructive actions require explicit confirmation:
 - Type `YES` (case-sensitive) to confirm
@@ -290,9 +290,9 @@ All destructive actions require explicit confirmation:
 
 ---
 
-## ❓ FAQ
+##  FAQ
 
-### 🤔 Common Questions
+###  Common Questions
 
 **Q: Why do I need a personal access token?**
 A: GitHub's API requires authentication for follow/unfollow operations and accessing private information.
@@ -309,7 +309,7 @@ A: Check your internet connection, token validity, and ensure all dependencies a
 **Q: How often should I run this?**
 A: It depends on your activity, but weekly or monthly runs are usually sufficient.
 
-### 🐛 Troubleshooting
+###  Troubleshooting
 
 **Error: "jq: command not found"**
 ```bash
@@ -331,49 +331,7 @@ echo "Token: ${GITHUB_TOKEN:0:10}..."  # Show only first 10 chars
 
 ---
 
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### 🚀 Getting Started
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Commit your changes**: `git commit -m 'Add amazing feature'`
-4. **Push to the branch**: `git push origin feature/amazing-feature`
-5. **Open a Pull Request**
-
-### 📝 Contribution Guidelines
-
-- Follow the existing code style
-- Add comments for complex logic
-- Test your changes thoroughly
-- Update documentation as needed
-
-### 🐛 Bug Reports
-
-When reporting bugs, please include:
-- Your operating system
-- Bash version (`bash --version`)
-- Steps to reproduce
-- Expected vs actual behavior
-- Any error messages
-
-### 💡 Feature Requests
-
-We'd love to hear your ideas! Please:
-- Check existing issues first
-- Describe the use case clearly
-- Explain why it would be useful
-- Consider implementation complexity
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-### 📜 MIT License Summary
+###  MIT License Summary
 
 - ✅ **Commercial use** allowed
 - ✅ **Modification** allowed
@@ -384,26 +342,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Thanks to all contributors and users
 - Inspired by the need for better GitHub relationship management
-- Built with ❤️ for the open-source community
-
----
-
-## 📞 Support
-
-- 🐛 **Bug Reports**: [Open an issue](https://github.com/yourusername/github-followers-analyzer/issues)
-- 💬 **Discussions**: [Join the discussion](https://github.com/yourusername/github-followers-analyzer/discussions)
-- 📧 **Contact**: [Email us](mailto:your-email@example.com)
+- Built with  for the open-source community
 
 ---
 
 <div align="center">
-
-**⭐ If this project helped you, please give it a star! ⭐**
-
-Made with ❤️ by [YourName](https://github.com/yourusername)
 
 </div>
