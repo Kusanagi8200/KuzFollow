@@ -1,4 +1,4 @@
-#  GitHub Followers Analyzer
+#  GITHUB FOLLOWERS ANALYZER
 
 <div align="center">
 
@@ -8,8 +8,6 @@
 ![Version](https://img.shields.io/badge/Version-2.0-orange?style=for-the-badge)
 
 **A powerful Bash script to analyze and manage your GitHub relationships**
-
-[Installation](#-installation) • [Usage](#-usage) • [Features](#-features) • [Examples](#-examples) • [FAQ](#-faq)
 
 </div>
 
