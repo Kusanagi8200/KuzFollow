@@ -5,8 +5,8 @@
 # =============================================================================
 
 # --- CONFIGURATION ---
-GITHUB_USER="GITHUB-USER"
-GITHUB_TOKEN="YOURTOKEN"
+GITHUB_USER="USER"
+GITHUB_TOKEN="YOURTOKENGITHUB"
 PER_PAGE=100
 
 # --- COLORS ---
@@ -67,6 +67,20 @@ get_user_info() {
     echo "$name|$public_repos"
 }
 
+# --- FOLLOW USER FUNCTION ---
+follow_user() {
+    local username=$1
+    local response=$(curl -s -w "%{http_code}" -o /dev/null -X PUT \
+        -u "$GITHUB_USER:$GITHUB_TOKEN" \
+        "https://api.github.com/user/following/$username" 2>/dev/null)
+    
+    if [[ "$response" == "204" ]]; then
+        return 0  # Success
+    else
+        return 1  # Failed
+    fi
+}
+
 # --- UNFOLLOW USER FUNCTION ---
 unfollow_user() {
     local username=$1
@@ -79,6 +93,38 @@ unfollow_user() {
     else
         return 1  # Failed
     fi
+}
+
+# --- MASS FOLLOW FUNCTION ---
+mass_follow() {
+    local users_to_follow=("$@")
+    local success_count=0
+    local failed_count=0
+    
+    echo -e "${GREEN}${BOLD}STARTING MASS FOLLOW PROCESS...${NC}"
+    echo -e "${YELLOW}${BOLD}TARGET: ${#users_to_follow[@]} ACCOUNTS${NC}"
+    echo
+    
+    for user in "${users_to_follow[@]}"; do
+        echo -ne "${YELLOW}FOLLOWING ${WHITE}${user}${NC}... "
+        
+        if follow_user "$user"; then
+            echo -e "${GREEN}✓ SUCCESS${NC}"
+            ((success_count++))
+        else
+            echo -e "${RED}✗ FAILED${NC}"
+            ((failed_count++))
+        fi
+        
+        # Rate limiting: wait 1 second between requests
+        sleep 1
+    done
+    
+    echo
+    echo -e "${GREEN}${BOLD}FOLLOW SUMMARY:${NC}"
+    echo -e "${WHITE}• SUCCESSFULLY FOLLOWED: ${GREEN}${success_count}${NC}"
+    echo -e "${WHITE}• FAILED TO FOLLOW: ${RED}${failed_count}${NC}"
+    echo
 }
 
 # --- MASS UNFOLLOW FUNCTION ---
@@ -249,16 +295,23 @@ main() {
     echo -e "${GREEN}✓ ${#followers_list[@]} FOLLOWERS RETRIEVED${NC}"
     echo
     
-    # Create followers map for optimized lookup
+    # Create followers and following maps for optimized lookup
     declare -A followers_map
+    declare -A following_map
+    
     for user in "${followers_list[@]}"; do
         followers_map["$user"]=1
+    done
+    
+    for user in "${following_list[@]}"; do
+        following_map["$user"]=1
     done
     
     # Analysis and display
     echo -e "${BLUE}${BOLD}ANALYZING DATA...${NC}"
     echo
     
+    # Users you follow but don't follow you back
     local unfollowed_count=0
     local unfollowed_users=()
     
@@ -266,6 +319,17 @@ main() {
         if [[ -z "${followers_map[$user]}" ]]; then
             unfollowed_users+=("$user")
             ((unfollowed_count++))
+        fi
+    done
+    
+    # Users who follow you but you don't follow back
+    local not_followed_back_count=0
+    local not_followed_back_users=()
+    
+    for user in "${followers_list[@]}"; do
+        if [[ -z "${following_map[$user]}" ]]; then
+            not_followed_back_users+=("$user")
+            ((not_followed_back_count++))
         fi
     done
     
@@ -283,8 +347,10 @@ main() {
     echo -e "${WHITE}• YOU FOLLOW      : ${GREEN}${BOLD}${#following_list[@]}${NC} ${WHITE}ACCOUNTS${NC}"
     echo -e "${WHITE}• FOLLOW YOU      : ${GREEN}${BOLD}${#followers_list[@]}${NC} ${WHITE}ACCOUNTS${NC}"
     echo -e "${WHITE}• DON'T FOLLOW BACK : ${RED}${BOLD}${unfollowed_count}${NC} ${WHITE}ACCOUNTS${NC}"
+    echo -e "${WHITE}• YOU DON'T FOLLOW BACK : ${BLUE}${BOLD}${not_followed_back_count}${NC} ${WHITE}ACCOUNTS${NC}"
     echo
     
+    # Display accounts you follow but don't follow you back
     if [[ $unfollowed_count -gt 0 ]]; then
         echo -e "${RED}${BOLD}ACCOUNTS THAT DON'T FOLLOW YOU BACK:${NC}"
         echo -e "${RED}${BOLD}════════════════════════════════════════${NC}"
@@ -293,41 +359,94 @@ main() {
             echo -e "${YELLOW}• ${WHITE}${user}${NC}"
         done
         echo
+    fi
+    
+    # Display followers you don't follow back
+    if [[ $not_followed_back_count -gt 0 ]]; then
+        echo -e "${BLUE}${BOLD}FOLLOWERS YOU DON'T FOLLOW BACK:${NC}"
+        echo -e "${BLUE}${BOLD}═══════════════════════════════════${NC}"
         
-        # Ask user if they want to unfollow
-        echo -e "${PURPLE}${BOLD}UNFOLLOW OPTIONS:${NC}"
-        echo -e "${WHITE}Do you want to unfollow these accounts that don't follow you back?${NC}"
-        echo -e "${CYAN}[1]${NC} Yes, unfollow ALL of them"
-        echo -e "${CYAN}[2]${NC} No, keep following them"
-        echo -e "${CYAN}[3]${NC} Show me the list again"
+        for user in "${not_followed_back_users[@]}"; do
+            echo -e "${CYAN}• ${WHITE}${user}${NC}"
+        done
+        echo
+    fi
+    
+    # Interactive menu
+    if [[ $unfollowed_count -gt 0 ]] || [[ $not_followed_back_count -gt 0 ]]; then
+        echo -e "${PURPLE}${BOLD}ACTION MENU:${NC}"
+        echo -e "${WHITE}What would you like to do?${NC}"
         echo
         
-        read -p "Enter your choice [1-3]: " choice
+        if [[ $unfollowed_count -gt 0 ]]; then
+            echo -e "${CYAN}[1]${NC} Unfollow accounts that don't follow you back (${RED}${unfollowed_count}${NC} accounts)"
+        fi
+        
+        if [[ $not_followed_back_count -gt 0 ]]; then
+            echo -e "${CYAN}[2]${NC} Follow back your followers (${BLUE}${not_followed_back_count}${NC} accounts)"
+        fi
+        
+        echo -e "${CYAN}[3]${NC} Show detailed lists again"
+        echo -e "${CYAN}[4]${NC} Do nothing and exit"
+        echo
+        
+        read -p "Enter your choice [1-4]: " choice
         echo
         
         case $choice in
             1)
-                echo -e "${RED}${BOLD}⚠️  WARNING: THIS WILL UNFOLLOW ${unfollowed_count} ACCOUNTS! ⚠️${NC}"
-                echo -e "${WHITE}Are you absolutely sure? This action cannot be undone easily.${NC}"
-                read -p "Type 'YES' to confirm: " confirm
-                echo
-                
-                if [[ "$confirm" == "YES" ]]; then
-                    mass_unfollow "${unfollowed_users[@]}"
-                else
-                    echo -e "${YELLOW}${BOLD}OPERATION CANCELLED${NC}"
+                if [[ $unfollowed_count -gt 0 ]]; then
+                    echo -e "${RED}${BOLD}⚠️  WARNING: THIS WILL UNFOLLOW ${unfollowed_count} ACCOUNTS! ⚠️${NC}"
+                    echo -e "${WHITE}Are you absolutely sure? This action cannot be undone easily.${NC}"
+                    read -p "Type 'YES' to confirm: " confirm
                     echo
+                    
+                    if [[ "$confirm" == "YES" ]]; then
+                        mass_unfollow "${unfollowed_users[@]}"
+                    else
+                        echo -e "${YELLOW}${BOLD}OPERATION CANCELLED${NC}"
+                        echo
+                    fi
+                else
+                    echo -e "${RED}${BOLD}NO ACCOUNTS TO UNFOLLOW${NC}"
                 fi
                 ;;
             2)
-                echo -e "${GREEN}${BOLD}KEEPING ALL CURRENT FOLLOWINGS${NC}"
-                echo
+                if [[ $not_followed_back_count -gt 0 ]]; then
+                    echo -e "${GREEN}${BOLD}🎯 READY TO FOLLOW ${not_followed_back_count} ACCOUNTS!${NC}"
+                    echo -e "${WHITE}This will follow back all your followers that you're not following yet.${NC}"
+                    read -p "Type 'YES' to confirm: " confirm
+                    echo
+                    
+                    if [[ "$confirm" == "YES" ]]; then
+                        mass_follow "${not_followed_back_users[@]}"
+                    else
+                        echo -e "${YELLOW}${BOLD}OPERATION CANCELLED${NC}"
+                        echo
+                    fi
+                else
+                    echo -e "${GREEN}${BOLD}NO NEW FOLLOWERS TO FOLLOW BACK${NC}"
+                fi
                 ;;
             3)
-                echo -e "${YELLOW}${BOLD}ACCOUNTS THAT DON'T FOLLOW YOU BACK:${NC}"
-                for user in "${unfollowed_users[@]}"; do
-                    echo -e "${YELLOW}• ${WHITE}${user}${NC}"
-                done
+                if [[ $unfollowed_count -gt 0 ]]; then
+                    echo -e "${RED}${BOLD}ACCOUNTS THAT DON'T FOLLOW YOU BACK:${NC}"
+                    for user in "${unfollowed_users[@]}"; do
+                        echo -e "${YELLOW}• ${WHITE}${user}${NC}"
+                    done
+                    echo
+                fi
+                
+                if [[ $not_followed_back_count -gt 0 ]]; then
+                    echo -e "${BLUE}${BOLD}FOLLOWERS YOU DON'T FOLLOW BACK:${NC}"
+                    for user in "${not_followed_back_users[@]}"; do
+                        echo -e "${CYAN}• ${WHITE}${user}${NC}"
+                    done
+                    echo
+                fi
+                ;;
+            4)
+                echo -e "${GREEN}${BOLD}NO CHANGES MADE${NC}"
                 echo
                 ;;
             *)
@@ -337,7 +456,7 @@ main() {
         esac
         
     else
-        echo -e "${GREEN}${BOLD}CONGRATULATIONS! ALL YOUR FOLLOWINGS FOLLOW YOU BACK!${NC}"
+        echo -e "${GREEN}${BOLD}PERFECT BALANCE! ALL YOUR FOLLOWINGS FOLLOW YOU BACK AND YOU FOLLOW ALL YOUR FOLLOWERS!${NC}"
         echo
     fi
     
