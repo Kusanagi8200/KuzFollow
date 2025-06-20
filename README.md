@@ -18,7 +18,7 @@
 
 The **GitHub Followers Analyzer** is an interactive Bash script that allows you to deeply analyze your GitHub relationships. It identifies who follows you, who you follow, and who doesn't follow you back, while offering automated actions to optimize your network.
 
-###  Visual Demo
+###  Visual
 
 ```
 ███████╗ ██████╗ ██╗     ██╗      ██████╗ ██╗    ██╗███████╗██████╗ ███████╗
@@ -96,8 +96,8 @@ brew install curl jq
 2. **Clone and configure the script**:
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/github-followers-analyzer.git
-cd github-followers-analyzer
+git clone https://github.com/Kusanagi8200/KuzFollow.git
+cd KuzFollow
 
 # Make the script executable
 chmod +x FOLLOWERS.sh
@@ -153,7 +153,7 @@ GITHUB_TOKEN="your_personal_access_token"
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `GITHUB_USER` | Your GitHub username | `"Kusanagi8200"` |
+| `GITHUB_USER` | Your GitHub username | `"GITHUB-USER"` |
 | `GITHUB_TOKEN` | Your personal access token | `"ghp_..."` |
 | `PER_PAGE` | Results per API page | `100` |
 
@@ -325,13 +325,6 @@ echo "Token: ${GITHUB_TOKEN:0:10}..."  # Show only first 10 chars
 
 ---
 
-##  Acknowledgments
-
-- Thanks to all contributors and users
-- Inspired by the need for better GitHub relationship management
-- Built with  for the open-source community
-
----
 
 <div align="center">
 
