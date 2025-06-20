@@ -2,11 +2,10 @@
 
 <div align="center">
  
-![THE KUZLAB PROD](https://img.shields.io/badge/THE%20%20%20KUZ%20%20%20ZEITGEIST%20%20%20PRODUCTION%20%20-blue?style=for-the-badge)
 ![GitHub Followers Analyzer](https://img.shields.io/badge/GitHub-Followers_Analyzer-blue?style=for-the-badge&logo=github)
 ![Bash](https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white)
 ![License](https://img.shields.io/badge/OpenSource-green?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-1.0.3-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-0.1.3-orange?style=for-the-badge)
 
 **A powerful Bash script to analyze and manage your GitHub relationships**
 
