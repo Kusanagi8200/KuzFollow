@@ -86,13 +86,39 @@ if ($needsAppend) {
 <body>
 <div class="wrap">
 
+<div class="card" style="text-align:center;">
+  <div style="
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:0.18em;
+    color:#ffffff;
+    text-transform:uppercase;
+    text-shadow:
+      0 0 6px rgba(51,204,255,.6),
+      0 0 14px rgba(51,204,255,.4),
+      0 0 28px rgba(51,204,255,.2);
+  ">
+    KUZFOLLOW GITHUB
+  </div>
+
+  <div style="
+    margin-top:6px;
+    font-size:13px;
+    letter-spacing:0.22em;
+    color:#cfefff;
+    opacity:.95;
+  ">
+    A KUZ NETWORK SOLUTION – [BETA-0.1.2025]
+  </div>
+</div>
+
 <div class="card">
   <h2>KUZFOLLOW · <?=h($user)?></h2>
   <div class="kv">
-    <span class="pill">followers <?=count($followers)?></span>
-    <span class="pill">following <?=count($following)?></span>
-    <span class="pill">repos <?=count($repos)?></span>
-    <span class="pill"><a href="#" onclick="openEvents();return false;">events</a></span>
+    <span class="pill">FOLLOWERS <?=count($followers)?></span>
+    <span class="pill">FOLLOWING <?=count($following)?></span>
+    <span class="pill">REPOS <?=count($repos)?></span>
+    <span class="pill"><a href="#" onclick="openEvents();return false;">EVENTS</a></span>
   </div>
 </div>
 
@@ -142,7 +168,7 @@ if ($needsAppend) {
           <div class="item"><label><input type="checkbox" name="users[]" value="<?=h($u)?>"> <?=h($u)?></label></div>
         <?php endforeach; ?>
       <?php endif; ?>
-      <label class="meta"><input type="checkbox" name="dry"> dry-run</label><br>
+      <label class="meta"><input type="checkbox" name="dry"> DRY-RUN</label><br>
       <button class="btn">FOLLOW SELECTED</button>
     </form>
   </div>
@@ -158,7 +184,7 @@ if ($needsAppend) {
           <div class="item"><label><input type="checkbox" name="users[]" value="<?=h($u)?>"> <?=h($u)?></label></div>
         <?php endforeach; ?>
       <?php endif; ?>
-      <label class="meta"><input type="checkbox" name="dry"> dry-run</label><br>
+      <label class="meta"><input type="checkbox" name="dry"> DRY-RUN</label><br>
       <button class="btn alt">UNFOLLOW SELECTED</button>
     </form>
   </div>
