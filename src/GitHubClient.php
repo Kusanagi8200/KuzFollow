@@ -68,28 +68,51 @@ final class GitHubClient
         return $all;
     }
 
-    public function getUser(string $user): array
+    public function getUser(string $user): array { return $this->request('GET', "/users/{$user}"); }
+
+    public function followers(string $user): array { return $this->paginate("/users/{$user}/followers"); }
+
+    public function following(string $user): array { return $this->paginate("/users/{$user}/following"); }
+
+    public function follow(string $username): void { $this->request('PUT', "/user/following/{$username}"); }
+
+    public function unfollow(string $username): void { $this->request('DELETE', "/user/following/{$username}"); }
+
+    // --- Nouveaux endpoints ---
+    public function repos(string $user): array
     {
-        return $this->request('GET', "/users/{$user}");
+        // "owner" = repos dont tu es propriétaire (le plus “propre” pour un dashboard)
+        return $this->paginate("/users/{$user}/repos", [
+            'type' => 'owner',
+            'sort' => 'updated',
+            'direction' => 'desc',
+        ]);
     }
 
-    public function followers(string $user): array
+    public function starred(string $user): array
     {
-        return $this->paginate("/users/{$user}/followers");
+        return $this->paginate("/users/{$user}/starred", [
+            'sort' => 'created',
+            'direction' => 'desc',
+        ]);
     }
 
-    public function following(string $user): array
+    public function orgs(string $user): array { return $this->paginate("/users/{$user}/orgs"); }
+
+    public function gists(string $user): array { return $this->paginate("/users/{$user}/gists"); }
+
+    public function events(string $user, int $perPage = 30): array
     {
-        return $this->paginate("/users/{$user}/following");
+        // GitHub limite fortement l’historique (évènements récents)
+        return $this->request('GET', "/users/{$user}/events/public", [
+            'per_page' => min(max($perPage, 1), 100),
+        ]);
     }
 
-    public function follow(string $username): void
+    public function receivedEvents(string $user, int $perPage = 30): array
     {
-        $this->request('PUT', "/user/following/{$username}");
-    }
-
-    public function unfollow(string $username): void
-    {
-        $this->request('DELETE', "/user/following/{$username}");
+        return $this->request('GET', "/users/{$user}/received_events/public", [
+            'per_page' => min(max($perPage, 1), 100),
+        ]);
     }
 }
