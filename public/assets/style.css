@@ -1,11 +1,11 @@
 :root{
-  /* Couleurs KUZAI */
+  /* KUZAI COLORS */
   --neon:#33ccff;
   --neon2:#7fdcff;
   --txt:#ffffff;
   --muted:#cfefff;
 
-  /* Fonds de containers (bleu clair, semi-transparent) */
+  /* CONTAINER BACKGROUNDS (light blue, semi-transparent) */
   --panel:rgba(120,200,255,0.18);
   --panel2:rgba(120,200,255,0.12);
   --line:rgba(120,220,255,0.55);
@@ -13,21 +13,25 @@
   --radius:16px;
 }
 
-/* Reset minimal */
+/* =========================
+   RESET / BASE
+   ========================= */
 *{
   box-sizing:border-box;
 }
 
-/* =========================
-   BACKGROUND GLOBAL
-   ========================= */
+html{
+  min-height:100%;
+}
+
 body{
+  min-height:100%;
   margin:0;
   color:var(--txt);
   font-family:system-ui, Segoe UI, Roboto;
 
-  /* Teinte KUZAI sur l’image de fond */
-  background:
+  /* STATIC FULL-SITE BACKGROUND */
+  background-image:
     linear-gradient(
       180deg,
       rgba(5, 20, 40, 0.85),
@@ -38,9 +42,15 @@ body{
       rgba(51, 204, 255, 0.18),
       transparent 60%
     ),
-    url("/assets/bg.jpg") center / cover fixed;
+    url("/assets/bg.jpg");
 
-  background-blend-mode: normal, screen, normal;
+  background-position:center center;
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-attachment:fixed;
+
+  background-blend-mode:normal, screen, normal;
+  background-color:#050f1f;
 }
 
 /* =========================
@@ -90,7 +100,7 @@ body{
 }
 
 /* =========================
-   ITEMS INTERNES
+   ITEMS / LISTS
    ========================= */
 .item{
   background:var(--panel2);
@@ -106,7 +116,7 @@ body{
 }
 
 /* =========================
-   TEXTE / LIENS
+   TEXT / LINKS
    ========================= */
 a{
   color:var(--neon);
@@ -118,7 +128,7 @@ a:hover{
 }
 
 /* =========================
-   BADGES / PILLS
+   PILLS / BADGES
    ========================= */
 .pill{
   display:inline-block;
@@ -132,7 +142,7 @@ a:hover{
 }
 
 /* =========================
-   BOUTONS
+   BUTTONS
    ========================= */
 .btn{
   margin-top:8px;
@@ -153,7 +163,7 @@ a:hover{
 }
 
 /* =========================
-   KV (header stats)
+   HEADER STATS
    ========================= */
 .kv{
   font-size:12px;
@@ -161,7 +171,7 @@ a:hover{
 }
 
 /* =========================
-   MODAL EVENTS
+   MODAL (EVENTS)
    ========================= */
 .modal{
   position:fixed;
@@ -202,7 +212,7 @@ a:hover{
 }
 
 /* =========================
-   IMAGES / SVG
+   MEDIA / SVG
    ========================= */
 img{
   max-width:100%;
