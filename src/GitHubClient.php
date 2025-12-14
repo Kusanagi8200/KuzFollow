@@ -6,59 +6,34 @@ final class GitHubClient
     private string $token;
     private string $api = 'https://api.github.com';
 
-    public function __construct(string $token)
-    {
-        $this->token = $token;
-    }
+    public function __construct(string $token){ $this->token = $token; }
 
-    private function request(string $method, string $path, array $query = []): array
-    {
-        $url = $this->api . $path;
-        if ($query) $url .= '?' . http_build_query($query);
-
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST  => $method,
-            CURLOPT_HTTPHEADER => [
+    private function req(string $m, string $p, array $q=[]): array {
+        $u = $this->api.$p.($q?'?'.http_build_query($q):'');
+        $c = curl_init($u);
+        curl_setopt_array($c,[
+            CURLOPT_RETURNTRANSFER=>true,
+            CURLOPT_CUSTOMREQUEST=>$m,
+            CURLOPT_HTTPHEADER=>[
                 'Accept: application/vnd.github+json',
                 'User-Agent: kuzfollow',
-                'Authorization: Bearer ' . $this->token,
+                'Authorization: Bearer '.$this->token,
             ],
         ]);
-
-        $res  = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
-
-        if ($code >= 400) {
-            $j = json_decode($res ?: '{}', true);
-            throw new RuntimeException($j['message'] ?? 'GitHub API error');
-        }
-
-        return json_decode($res ?: '[]', true);
+        $r=curl_exec($c); $code=curl_getinfo($c,CURLINFO_RESPONSE_CODE); curl_close($c);
+        if($code>=400){ $j=json_decode($r?:'{}',true); throw new RuntimeException($j['message']??'API error'); }
+        return json_decode($r?:'[]',true);
+    }
+    private function pages(string $p): array {
+        $a=[]; for($i=1;$i<=10;$i++){ $d=$this->req('GET',$p,['per_page'=>100,'page'=>$i]); if(!$d)break; $a=array_merge($a,$d);} return $a;
     }
 
-    private function paginate(string $path): array
-    {
-        $all = [];
-        for ($p=1; $p<=10; $p++) {
-            $r = $this->request('GET', $path, ['per_page'=>100,'page'=>$p]);
-            if (!$r) break;
-            $all = array_merge($all, $r);
-        }
-        return $all;
-    }
+    public function followers(string $u): array { return $this->pages("/users/$u/followers"); }
+    public function following(string $u): array { return $this->pages("/users/$u/following"); }
 
-    /* GRAPH */
-    public function followers(string $u): array { return $this->paginate("/users/$u/followers"); }
-    public function following(string $u): array { return $this->paginate("/users/$u/following"); }
+    public function follow(string $u): void   { $this->req('PUT',"/user/following/$u"); }
+    public function unfollow(string $u): void { $this->req('DELETE',"/user/following/$u"); }
 
-    /* ACTIONS */
-    public function follow(string $u): void   { $this->request('PUT',    "/user/following/$u"); }
-    public function unfollow(string $u): void { $this->request('DELETE', "/user/following/$u"); }
-
-    /* DATA */
-    public function repos(string $u): array  { return $this->paginate("/users/$u/repos"); }
-    public function events(string $u): array { return $this->request('GET',"/users/$u/events/public",['per_page'=>30]); }
+    public function repos(string $u): array  { return $this->pages("/users/$u/repos"); }
+    public function events(string $u): array { return $this->req('GET',"/users/$u/events/public",['per_page'=>30]); }
 }
