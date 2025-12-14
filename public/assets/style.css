@@ -1,75 +1,182 @@
 :root{
+  /* Couleurs KUZAI */
   --neon:#33ccff;
   --neon2:#7fdcff;
   --txt:#ffffff;
   --muted:#cfefff;
 
-  /* cadres bleu clair + semi transparent */
-  --panel:rgba(120,200,255,.18);
-  --panel2:rgba(120,200,255,.12);
-  --line:rgba(120,220,255,.55);
+  /* Fonds de containers (bleu clair, semi-transparent) */
+  --panel:rgba(120,200,255,0.18);
+  --panel2:rgba(120,200,255,0.12);
+  --line:rgba(120,220,255,0.55);
 
   --radius:16px;
 }
 
-*{box-sizing:border-box}
-body{
-  margin:0; color:var(--txt);
-  font-family:system-ui,Segoe UI,Roboto;
-  background:
-    linear-gradient(180deg,rgba(0,0,0,.65),rgba(0,0,0,.90)),
-    url("/assets/bg.jpg") center/cover fixed;
+/* Reset minimal */
+*{
+  box-sizing:border-box;
 }
 
-.wrap{max-width:1200px;margin:26px auto;padding:0 14px}
+/* =========================
+   BACKGROUND GLOBAL
+   ========================= */
+body{
+  margin:0;
+  color:var(--txt);
+  font-family:system-ui, Segoe UI, Roboto;
 
+  /* Teinte KUZAI sur l’image de fond */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(5, 20, 40, 0.85),
+      rgba(5, 20, 40, 0.95)
+    ),
+    radial-gradient(
+      circle at top,
+      rgba(51, 204, 255, 0.18),
+      transparent 60%
+    ),
+    url("/assets/bg.jpg") center / cover fixed;
+
+  background-blend-mode: normal, screen, normal;
+}
+
+/* =========================
+   LAYOUT
+   ========================= */
+.wrap{
+  max-width:1200px;
+  margin:26px auto;
+  padding:0 14px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+@media(max-width:900px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* =========================
+   CONTAINERS / CARDS
+   ========================= */
 .card{
   background:var(--panel);
   border:1px solid var(--line);
   border-radius:var(--radius);
   padding:14px;
   margin-bottom:14px;
-  box-shadow:0 0 26px rgba(51,204,255,.25);
+
+  box-shadow:
+    0 0 18px rgba(51,204,255,.25);
+
   backdrop-filter:blur(10px);
 }
 
 .card h2{
   margin:0 0 10px;
-  color:var(--neon2);
-  letter-spacing:.14em;
   font-size:13px;
+  font-weight:600;
+  letter-spacing:0.14em;
   text-transform:uppercase;
+  color:var(--neon2);
 }
 
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-
+/* =========================
+   ITEMS INTERNES
+   ========================= */
 .item{
   background:var(--panel2);
-  border:1px solid rgba(255,255,255,.25);
+  border:1px solid rgba(255,255,255,0.25);
   border-radius:12px;
   padding:8px 10px;
   margin-bottom:6px;
 }
 
-.meta{font-size:12px;color:var(--muted)}
-a{color:var(--neon);text-decoration:none}
+.meta{
+  font-size:12px;
+  color:var(--muted);
+}
 
+/* =========================
+   TEXTE / LIENS
+   ========================= */
+a{
+  color:var(--neon);
+  text-decoration:none;
+}
+
+a:hover{
+  text-decoration:underline;
+}
+
+/* =========================
+   BADGES / PILLS
+   ========================= */
+.pill{
+  display:inline-block;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:4px 10px;
+  margin-right:6px;
+  font-size:12px;
+  color:var(--txt);
+  background:rgba(0,0,0,0.35);
+}
+
+/* =========================
+   BOUTONS
+   ========================= */
 .btn{
   margin-top:8px;
   padding:8px 12px;
   border-radius:12px;
   border:1px solid var(--line);
-  background:rgba(0,0,0,.35);
-  color:#fff; cursor:pointer;
+  background:rgba(0,0,0,0.35);
+  color:#ffffff;
+  cursor:pointer;
 }
-.btn.alt{background:rgba(120,200,255,.25)}
-.kv{font-size:12px;color:var(--muted)}
-.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 10px;margin-right:6px}
 
-/* modal events */
-.modal{position:fixed; inset:0; display:none; background:rgba(0,0,0,.65);}
-.modal.open{display:flex;align-items:center;justify-content:center}
+.btn:hover{
+  background:rgba(51,204,255,0.25);
+}
+
+.btn.alt{
+  background:rgba(120,200,255,0.25);
+}
+
+/* =========================
+   KV (header stats)
+   ========================= */
+.kv{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* =========================
+   MODAL EVENTS
+   ========================= */
+.modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  background:rgba(0,0,0,0.65);
+  z-index:10000;
+}
+
+.modal.open{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
 .modal .box{
   width:min(820px,92vw);
   max-height:80vh;
@@ -78,6 +185,27 @@ a{color:var(--neon);text-decoration:none}
   border-radius:18px;
   padding:14px;
   overflow:hidden;
+
+  backdrop-filter:blur(10px);
 }
-.modal .head{display:flex;justify-content:space-between;align-items:center}
-.modal .body{margin-top:10px; max-height:60vh; overflow:auto;}
+
+.modal .head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.modal .body{
+  margin-top:10px;
+  max-height:60vh;
+  overflow:auto;
+}
+
+/* =========================
+   IMAGES / SVG
+   ========================= */
+img{
+  max-width:100%;
+  height:auto;
+  display:block;
+}
