@@ -1,146 +1,78 @@
 <?php
-declare(strict_types=1);
-
 session_start();
-
+require __DIR__.'/../src/GitHubClient.php';
 $config = require '/etc/kuzfollow/config.php';
-require __DIR__ . '/../src/GitHubClient.php';
 
-function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
+$gh = new GitHubClient($config['github_token']);
+$user = $config['github_user'];
 
-function csrf_token(): string {
-  if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
-  return $_SESSION['csrf'];
-}
-function csrf_check(): void {
-  $t = (string)($_POST['csrf'] ?? '');
-  if (!hash_equals((string)($_SESSION['csrf'] ?? ''), $t)) {
-    http_response_code(403);
-    exit('CSRF');
-  }
-}
+$followers = $gh->followers($user);
+$following = $gh->following($user);
+$repos     = $gh->repos($user);
+$events    = $gh->events($user);
 
-$user  = (string)($config['github_user'] ?? '');
-$token = (string)($config['github_token'] ?? '');
-$perPage = (int)($config['per_page'] ?? 100);
+$fol = array_column($followers,'login');
+$ing = array_column($following,'login');
 
-if ($user === '' || $token === '' || $token === 'REMPLACE_PAR_NOUVEAU_TOKEN') {
-  http_response_code(500);
-  exit('Server not configured: set /etc/kuzfollow/config.php');
-}
-
-$gh = new GitHubClient($token, $perPage);
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
-
-$status = $_SESSION['status'] ?? null;
-unset($_SESSION['status']);
-
-try {
-  if ($path === '/action/follow' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrf_check();
-    $targets = $_POST['users'] ?? [];
-    if (!is_array($targets)) $targets = [];
-    $ok=0; $fail=0;
-
-    foreach ($targets as $u) {
-      $u = trim((string)$u);
-      if ($u === '' || strlen($u) > 39) continue;
-      try { $gh->follow($u); $ok++; } catch (Throwable) { $fail++; }
-      usleep(350000);
-    }
-    $_SESSION['status'] = "Follow: OK={$ok} FAIL={$fail}";
-    header('Location: /'); exit;
-  }
-
-  if ($path === '/action/unfollow' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrf_check();
-    $targets = $_POST['users'] ?? [];
-    if (!is_array($targets)) $targets = [];
-    $ok=0; $fail=0;
-
-    foreach ($targets as $u) {
-      $u = trim((string)$u);
-      if ($u === '' || strlen($u) > 39) continue;
-      try { $gh->unfollow($u); $ok++; } catch (Throwable) { $fail++; }
-      usleep(350000);
-    }
-    $_SESSION['status'] = "Unfollow: OK={$ok} FAIL={$fail}";
-    header('Location: /'); exit;
-  }
-
-  $me = $gh->getUser($user);
-  $followers = $gh->followers($user);
-  $following = $gh->following($user);
-
-  $followersLogins = array_flip(array_map(fn($x) => $x['login'], $followers));
-  $followingLogins = array_flip(array_map(fn($x) => $x['login'], $following));
-
-  $notFollowingBack = [];
-  foreach ($followingLogins as $login => $_) {
-    if (!isset($followersLogins[$login])) $notFollowingBack[] = $login;
-  }
-
-  $youDontFollowBack = [];
-  foreach ($followersLogins as $login => $_) {
-    if (!isset($followingLogins[$login])) $youDontFollowBack[] = $login;
-  }
-
-  sort($notFollowingBack);
-  sort($youDontFollowBack);
-
-} catch (Throwable $e) {
-  http_response_code(500);
-  exit("Error: " . h($e->getMessage()));
-}
-
-$csrf = csrf_token();
+$notBack = array_diff($ing,$fol);
+$youDont = array_diff($fol,$ing);
 ?>
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>KuzFollow</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<title>KUZFOLLOW</title>
+<link rel="stylesheet" href="/assets/style.css">
 </head>
-<body style="font-family:sans-serif;max-width:1100px;margin:30px auto;padding:0 12px;">
-  <h1>KuzFollow</h1>
+<body>
+<div class="wrap">
 
-  <?php if ($status): ?>
-    <div style="padding:10px;border:1px solid #999;margin:10px 0;"><?=h($status)?></div>
-  <?php endif; ?>
+<div class="card">
+  <h2>KUZFOLLOW · <?=htmlspecialchars($user)?></h2>
+  <div class="meta">
+    followers <?=count($followers)?> · following <?=count($following)?> · repos <?=count($repos)?>
+  </div>
+</div>
 
-  <h2>User</h2>
-  <ul>
-    <li><b>Login:</b> <?=h((string)($me['login'] ?? 'N/A'))?></li>
-    <li><b>Name:</b> <?=h((string)($me['name'] ?? 'N/A'))?></li>
-    <li><b>Followers:</b> <?=count($followers)?></li>
-    <li><b>Following:</b> <?=count($following)?></li>
-  </ul>
+<div class="grid">
 
-  <h2>Non mutual (you follow, they don't)</h2>
-  <form method="post" action="/action/unfollow" onsubmit="return confirm('Unfollow selected accounts?');">
-    <input type="hidden" name="csrf" value="<?=h($csrf)?>">
-    <?php if (count($notFollowingBack) === 0): ?>
-      <div>None.</div>
-    <?php else: ?>
-      <?php foreach ($notFollowingBack as $u): ?>
-        <label style="display:block"><input type="checkbox" name="users[]" value="<?=h($u)?>"> <?=h($u)?></label>
-      <?php endforeach; ?>
-      <button type="submit" style="margin-top:10px">Unfollow selected</button>
-    <?php endif; ?>
-  </form>
+<div class="card">
+<h2>FOLLOWERS YOU DON’T FOLLOW BACK</h2>
+<?php foreach($youDont as $u): ?>
+  <div class="item"><?=$u?></div>
+<?php endforeach; ?>
+</div>
 
-  <h2>Followers you don’t follow back</h2>
-  <form method="post" action="/action/follow" onsubmit="return confirm('Follow selected accounts?');">
-    <input type="hidden" name="csrf" value="<?=h($csrf)?>">
-    <?php if (count($youDontFollowBack) === 0): ?>
-      <div>None.</div>
-    <?php else: ?>
-      <?php foreach ($youDontFollowBack as $u): ?>
-        <label style="display:block"><input type="checkbox" name="users[]" value="<?=h($u)?>"> <?=h($u)?></label>
-      <?php endforeach; ?>
-      <button type="submit" style="margin-top:10px">Follow selected</button>
-    <?php endif; ?>
-  </form>
+<div class="card">
+<h2>YOU FOLLOW, THEY DON’T</h2>
+<?php foreach($notBack as $u): ?>
+  <div class="item"><?=$u?></div>
+<?php endforeach; ?>
+</div>
+
+<div class="card">
+<h2>RECENT EVENTS</h2>
+<?php foreach(array_slice($events,0,12) as $e): ?>
+  <div class="item">
+    <?=htmlspecialchars($e['type'])?>
+    <div class="meta"><?=htmlspecialchars($e['repo']['name'] ?? '')?></div>
+  </div>
+<?php endforeach; ?>
+</div>
+
+<div class="card">
+<h2>REPOSITORIES</h2>
+<?php foreach(array_slice($repos,0,15) as $r): ?>
+  <div class="item">
+    <a href="<?=$r['html_url']?>" target="_blank"><?=$r['name']?></a>
+    <div class="meta">
+      ★<?=$r['stargazers_count']?> · forks <?=$r['forks_count']?> · <?=$r['language']?>
+    </div>
+  </div>
+<?php endforeach; ?>
+</div>
+
+</div>
+</div>
 </body>
 </html>
