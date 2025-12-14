@@ -9,14 +9,9 @@ function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8')
 
 $user  = (string)($config['github_user'] ?? '');
 $token = (string)($config['github_token'] ?? '');
-
-if ($user === '' || $token === '' || $token === 'REMPLACE_PAR_NOUVEAU_TOKEN') {
-  http_response_code(500);
-  exit('Server not configured: /etc/kuzfollow/config.php');
-}
+if ($user === '' || $token === '') { http_response_code(500); exit('Server not configured'); }
 
 $gh = new GitHubClient($token);
-
 $preview = null;
 
 /* ===== ACTIONS + DRY-RUN ===== */
@@ -26,9 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $dry    = isset($_POST['dry']);
 
   if (!is_array($users)) $users = [];
-
-  $users = array_values(array_filter(array_map('trim', array_map('strval', $users))));
-  $users = array_values(array_unique($users));
+  $users = array_values(array_unique(array_values(array_filter(array_map('trim', array_map('strval', $users))))));
 
   if ($dry) {
     $preview = ['action' => $action, 'users' => $users];
@@ -49,7 +42,6 @@ $following = $gh->following($user);
 $repos     = $gh->reposOwnerSorted($user);
 $events    = $gh->eventsPublic($user, 30);
 
-/* ===== DIFFS ===== */
 $fol = array_column($followers, 'login');
 $ing = array_column($following, 'login');
 
@@ -59,7 +51,6 @@ $theyDontFollowYou = array_values(array_diff($ing, $fol)); // following who don'
 sort($youDontFollowBack);
 sort($theyDontFollowYou);
 
-/* ===== 10 RECENT FOLLOWERS ===== */
 $recentFollowers = array_slice($followers, 0, 10);
 
 /* ===== DAILY SNAPSHOT (followers over time) ===== */
@@ -76,16 +67,13 @@ if (is_file($historyFile)) {
   $j = json_decode($raw ?: '[]', true);
   if (is_array($j)) $hist = $j;
 }
-
 $last = end($hist);
 $needsAppend = !is_array($last) || (($last['date'] ?? '') !== $today);
-
 if ($needsAppend) {
   $hist[] = ['date' => $today, 'followers' => $countFollowers];
   if (count($hist) > 180) $hist = array_slice($hist, -180);
   file_put_contents($historyFile, json_encode(array_values($hist), JSON_UNESCAPED_SLASHES));
 }
-
 ?>
 <!doctype html>
 <html>
@@ -120,6 +108,7 @@ if ($needsAppend) {
 
 <div class="grid">
 
+  <!-- Row 1 -->
   <div class="card">
     <h2>10 RECENT FOLLOWERS</h2>
     <?php if (!$recentFollowers): ?>
@@ -131,6 +120,17 @@ if ($needsAppend) {
     <?php endif; ?>
   </div>
 
+  <div class="card">
+    <h2>REPOSITORIES (OWNER / UPDATED)</h2>
+    <?php foreach (array_slice($repos, 0, 12) as $r): ?>
+      <div class="item">
+        <a href="<?=h((string)($r['html_url'] ?? '#'))?>" target="_blank"><?=h((string)($r['name'] ?? 'repo'))?></a>
+        <div class="meta">★<?= (int)($r['stargazers_count'] ?? 0) ?> · forks <?= (int)($r['forks_count'] ?? 0) ?> · <?=h((string)($r['language'] ?? ''))?></div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+
+  <!-- Row 2 -->
   <div class="card">
     <h2>FOLLOW BACK</h2>
     <form method="post">
@@ -163,27 +163,18 @@ if ($needsAppend) {
     </form>
   </div>
 
-  <div class="card">
-    <h2>REPOSITORIES (OWNER / UPDATED)</h2>
-    <?php foreach (array_slice($repos, 0, 12) as $r): ?>
-      <div class="item">
-        <a href="<?=h((string)($r['html_url'] ?? '#'))?>" target="_blank"><?=h((string)($r['name'] ?? 'repo'))?></a>
-        <div class="meta">★<?= (int)($r['stargazers_count'] ?? 0) ?> · forks <?= (int)($r['forks_count'] ?? 0) ?> · <?=h((string)($r['language'] ?? ''))?></div>
-      </div>
-    <?php endforeach; ?>
-  </div>
-
+  <!-- Graph full width -->
   <div class="card" style="grid-column:1/-1;">
     <h2>FOLLOWERS OVER TIME</h2>
     <div class="item" style="padding:10px;">
       <img src="/graph.svg.php" alt="Followers over time" style="width:100%;height:auto;display:block;">
-      <div class="meta">daily snapshot (UTC): <?=h($today)?> · current followers: <?=count($followers)?></div>
     </div>
   </div>
 
 </div>
 </div>
 
+<!-- MODAL EVENTS -->
 <div id="events" class="modal">
   <div class="box">
     <div class="head">
@@ -205,5 +196,6 @@ if ($needsAppend) {
 function openEvents(){document.getElementById('events').classList.add('open')}
 function closeEvents(){document.getElementById('events').classList.remove('open')}
 </script>
+
 </body>
 </html>
