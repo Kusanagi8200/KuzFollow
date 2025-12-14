@@ -8,72 +8,48 @@ require __DIR__ . '/../src/GitHubClient.php';
 
 $user  = (string)($config['github_user'] ?? '');
 $token = (string)($config['github_token'] ?? '');
-
-if ($user === '' || $token === '') {
-  http_response_code(500);
-  exit("Missing config\n");
-}
+if ($user === '' || $token === '') { http_response_code(500); exit("Missing config\n"); }
 
 $gh = new GitHubClient($token);
 $followers = $gh->followers($user);
 $N = count($followers);
 
-// Date de création du compte
-$api = 'https://api.github.com/users/'.$user;
-$ch = curl_init($api);
-curl_setopt_array($ch, [
-  CURLOPT_RETURNTRANSFER => true,
-  CURLOPT_HTTPHEADER => [
-    'Accept: application/vnd.github+json',
-    'User-Agent: kuzfollow',
-    'Authorization: Bearer '.$token,
-  ],
-  CURLOPT_TIMEOUT => 25,
-]);
-$res = curl_exec($ch);
-$code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-curl_close($ch);
+/* PARAMS */
+$points = 30;       // EXACTEMENT 30 points
+$incPerDay = 3;     // +3/jour
 
-$j = json_decode($res ?: '{}', true);
-if ($code >= 400) {
-  http_response_code(500);
-  exit("GitHub API error\n");
-}
+$tz = new DateTimeZone('UTC');
+$today = new DateTimeImmutable('today', $tz);              // 00:00 UTC
+$start = $today->sub(new DateInterval('P'.($points-1).'D')); // J-29 => 30 dates incl.
 
-$created = (string)($j['created_at'] ?? '');
-if ($created === '') {
-  http_response_code(500);
-  exit("Cannot read created_at\n");
-}
+$startValue = $N - (($points-1) * $incPerDay);
+if ($startValue < 0) $startValue = 0;
 
-$today = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-$start = $today->sub(new DateInterval('P30D'));
-$createdDt = new DateTimeImmutable($created, new DateTimeZone('UTC'));
-if ($createdDt > $start) $start = $createdDt;
-
-$days = (int)$today->diff($start)->days;
-if ($days < 2) { $start = $today->sub(new DateInterval('P2D')); $days = 2; }
-
-$base = (int)max(0, floor($N * 0.60));
 $hist = [];
-
-for ($i=0; $i <= $days; $i++) {
-  $d = $start->add(new DateInterval('P'.$i.'D'));
-  $t = $days === 0 ? 1.0 : ($i / $days);
-  $v = (int)round($base + ($N - $base) * $t);
-  $hist[] = ['date' => $d->format('Y-m-d'), 'followers' => $v];
+for ($i = 0; $i < $points; $i++) {
+  $d = $start->add(new DateInterval('P'.$i.'D'))->format('Y-m-d');
+  $v = $startValue + ($i * $incPerDay);
+  if ($v > $N) $v = $N;
+  $hist[] = ['date' => $d, 'followers' => $v];
 }
 
-/* IMPORTANT: même chemin que graph.svg.php */
-$dataDir = realpath(__DIR__ . '/..') . '/data';
-if (!is_dir($dataDir)) @mkdir($dataDir, 0755, true);
+/* force dernier point = N */
+$hist[$points-1]['date'] = $today->format('Y-m-d');
+$hist[$points-1]['followers'] = $N;
 
+/* write */
+$dataDir = __DIR__ . '/../data';
+@mkdir($dataDir, 0755, true);
 $file = $dataDir . '/followers_history.json';
 file_put_contents($file, json_encode($hist, JSON_UNESCAPED_SLASHES));
 
 echo "OK\n";
 echo "user={$user}\n";
 echo "points=".count($hist)."\n";
-echo "range=".$hist[0]['date']." -> ".$hist[count($hist)-1]['date']."\n";
+echo "start=".$hist[0]['date']."\n";
+echo "end=".$hist[count($hist)-1]['date']."\n";
+echo "span_days=".(new DateTimeImmutable($hist[count($hist)-1]['date'], $tz))->diff(new DateTimeImmutable($hist[0]['date'], $tz))->days."\n";
 echo "followers_now={$N}\n";
+echo "start_value={$startValue}\n";
+echo "increment_per_day={$incPerDay}\n";
 echo "file={$file}\n";

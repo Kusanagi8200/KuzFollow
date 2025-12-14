@@ -155,5 +155,4 @@ $lp = $pts[$n-1];
 
   <!-- Footer (hors zone plot) -->
   <?= $pill(18, $H-44, "daily snapshot (UTC): {$todayUTC}", 11, '#cfefff') ?>
-  <?= $pill($W-330, $H-44, $rangeLabel, 11, '#cfefff') ?>
 </svg>
