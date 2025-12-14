@@ -6,34 +6,81 @@ final class GitHubClient
     private string $token;
     private string $api = 'https://api.github.com';
 
-    public function __construct(string $token){ $this->token = $token; }
+    public function __construct(string $token)
+    {
+        $this->token = $token;
+    }
 
-    private function req(string $m, string $p, array $q=[]): array {
-        $u = $this->api.$p.($q?'?'.http_build_query($q):'');
-        $c = curl_init($u);
-        curl_setopt_array($c,[
-            CURLOPT_RETURNTRANSFER=>true,
-            CURLOPT_CUSTOMREQUEST=>$m,
-            CURLOPT_HTTPHEADER=>[
+    private function request(string $method, string $path, array $query = []): array
+    {
+        $url = $this->api . $path;
+        if ($query) $url .= '?' . http_build_query($query);
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST  => $method,
+            CURLOPT_HTTPHEADER     => [
                 'Accept: application/vnd.github+json',
+                'X-GitHub-Api-Version: 2022-11-28',
                 'User-Agent: kuzfollow',
-                'Authorization: Bearer '.$this->token,
+                'Authorization: Bearer ' . $this->token,
             ],
+            CURLOPT_TIMEOUT        => 25,
         ]);
-        $r=curl_exec($c); $code=curl_getinfo($c,CURLINFO_RESPONSE_CODE); curl_close($c);
-        if($code>=400){ $j=json_decode($r?:'{}',true); throw new RuntimeException($j['message']??'API error'); }
-        return json_decode($r?:'[]',true);
+
+        $res  = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $err  = curl_error($ch);
+        curl_close($ch);
+
+        if ($res === false) {
+            throw new RuntimeException('cURL error: ' . $err);
+        }
+
+        $json = json_decode($res ?: '[]', true);
+
+        if ($code >= 400) {
+            $msg = is_array($json) && isset($json['message']) ? (string)$json['message'] : 'GitHub API error';
+            throw new RuntimeException("GitHub API {$code}: {$msg}");
+        }
+
+        return is_array($json) ? $json : [];
     }
-    private function pages(string $p): array {
-        $a=[]; for($i=1;$i<=10;$i++){ $d=$this->req('GET',$p,['per_page'=>100,'page'=>$i]); if(!$d)break; $a=array_merge($a,$d);} return $a;
+
+    private function paginate(string $path, array $query = []): array
+    {
+        $all = [];
+        for ($page = 1; $page <= 20; $page++) { // up to 2000 items
+            $data = $this->request('GET', $path, $query + ['per_page' => 100, 'page' => $page]);
+            if (!$data) break;
+            $all = array_merge($all, $data);
+        }
+        return $all;
     }
 
-    public function followers(string $u): array { return $this->pages("/users/$u/followers"); }
-    public function following(string $u): array { return $this->pages("/users/$u/following"); }
+    /* GRAPH */
+    public function followers(string $u): array { return $this->paginate("/users/{$u}/followers"); }
+    public function following(string $u): array { return $this->paginate("/users/{$u}/following"); }
 
-    public function follow(string $u): void   { $this->req('PUT',"/user/following/$u"); }
-    public function unfollow(string $u): void { $this->req('DELETE',"/user/following/$u"); }
+    /* ACTIONS */
+    public function follow(string $u): void { $this->request('PUT', "/user/following/{$u}"); }
+    public function unfollow(string $u): void { $this->request('DELETE', "/user/following/{$u}"); }
 
-    public function repos(string $u): array  { return $this->pages("/users/$u/repos"); }
-    public function events(string $u): array { return $this->req('GET',"/users/$u/events/public",['per_page'=>30]); }
+    /* DATA */
+    public function reposOwnerSorted(string $u): array
+    {
+        return $this->paginate("/users/{$u}/repos", [
+            'type' => 'owner',
+            'sort' => 'updated',
+            'direction' => 'desc',
+        ]);
+    }
+
+    public function eventsPublic(string $u, int $limit = 30): array
+    {
+        return $this->request('GET', "/users/{$u}/events/public", [
+            'per_page' => max(1, min(100, $limit)),
+        ]);
+    }
 }
