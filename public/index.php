@@ -79,7 +79,7 @@ if ($needsAppend) {
 <html>
 <head>
 <meta charset="utf-8">
-<title>KUZFOLLOW</title>
+<title>KUZFOLLOW-GITHUB</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="/assets/style.css">
 </head>
@@ -88,7 +88,7 @@ if ($needsAppend) {
 
 <div class="card" style="text-align:center;">
   <div style="
-    font-size:22px;
+    font-size:28px;
     font-weight:700;
     letter-spacing:0.18em;
     color:#ffffff;
@@ -98,7 +98,7 @@ if ($needsAppend) {
       0 0 14px rgba(51,204,255,.4),
       0 0 28px rgba(51,204,255,.2);
   ">
-    KUZFOLLOW GITHUB
+    KUZFOLLOW-GITHUB
   </div>
 
   <div style="
@@ -113,7 +113,7 @@ if ($needsAppend) {
 </div>
 
 <div class="card">
-  <h2>KUZFOLLOW · <?=h($user)?></h2>
+  <h2>USER - <?=h($user)?></h2>
   <div class="kv">
     <span class="pill">FOLLOWERS <?=count($followers)?></span>
     <span class="pill">FOLLOWING <?=count($following)?></span>

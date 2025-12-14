@@ -4,115 +4,155 @@ declare(strict_types=1);
 header('Content-Type: image/svg+xml; charset=utf-8');
 header('Cache-Control: no-store');
 
-$historyFile = __DIR__ . '/../data/followers_history.json';
-$history = [];
+function esc(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 
-if (is_file($historyFile)) {
-  $raw = file_get_contents($historyFile);
-  $j = json_decode($raw ?: '[]', true);
-  if (is_array($j)) $history = $j;
-}
+/* Canvas */
+$W = 980; $H = 300;
 
-/*
-  Format attendu :
-  [
-    {"date":"2025-12-01","followers":123},
-    {"date":"2025-12-02","followers":126},
-    ...
-  ]
-*/
+/* Plot area (réserve header/footer => zéro chevauchement) */
+$padL = 76;
+$padR = 22;
+$padT = 86;
+$padB = 58;
 
-if (count($history) < 2) {
-  echo '<?xml version="1.0" encoding="UTF-8"?>';
-  echo '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="220" viewBox="0 0 900 220">';
-  echo '<rect x="0" y="0" width="900" height="220" fill="rgba(120,200,255,0.12)" stroke="rgba(120,220,255,0.55)"/>';
-  echo '<text x="20" y="40" fill="#ffffff" font-family="system-ui,Segoe UI,Roboto" font-size="14">FOLLOWERS OVER TIME</text>';
-  echo '<text x="20" y="80" fill="#cfefff" font-family="ui-monospace,Menlo,Consolas" font-size="12">Not enough data yet. Need at least 2 daily snapshots.</text>';
-  echo '</svg>';
-  exit;
-}
-
-$W = 900; $H = 220;
-$padL = 56; $padR = 18; $padT = 22; $padB = 42;
 $plotW = $W - $padL - $padR;
 $plotH = $H - $padT - $padB;
 
-$vals = array_map(fn($p) => (int)($p['followers'] ?? 0), $history);
-$minV = min($vals);
-$maxV = max($vals);
-if ($minV === $maxV) { $minV = $minV - 1; $maxV = $maxV + 1; }
+/* History */
+$pathA = __DIR__ . '/../data/followers_history.json';
+$pathB = __DIR__ . '/followers_history.json';
+$historyPath = is_file($pathA) ? $pathA : (is_file($pathB) ? $pathB : $pathA);
+
+$history = [];
+$err = null;
+
+try {
+    if (!is_file($historyPath)) throw new RuntimeException('history file not found');
+    if (!is_readable($historyPath)) throw new RuntimeException('history file not readable');
+
+    $raw = file_get_contents($historyPath);
+    if ($raw === false || trim($raw) === '') throw new RuntimeException('history file empty');
+
+    $j = json_decode($raw, true);
+    if (!is_array($j)) throw new RuntimeException('history json invalid');
+
+    foreach ($j as $p) {
+        if (!is_array($p)) continue;
+        $d = (string)($p['date'] ?? '');
+        $v = (int)($p['followers'] ?? -1);
+        if ($d === '' || $v < 0) continue;
+        $history[] = ['date' => $d, 'followers' => $v];
+    }
+
+    if (count($history) < 2) throw new RuntimeException('not enough points (<2)');
+} catch (Throwable $e) {
+    $err = $e->getMessage();
+}
+
+echo '<?xml version="1.0" encoding="UTF-8"?>';
+
+if ($err !== null) {
+    $size = is_file($historyPath) ? (string)filesize($historyPath) : 'N/A';
+    ?>
+<svg xmlns="http://www.w3.org/2000/svg" width="<?= $W ?>" height="<?= $H ?>" viewBox="0 0 <?= $W ?> <?= $H ?>">
+  <rect x="0" y="0" width="<?= $W ?>" height="<?= $H ?>" fill="rgba(120,200,255,0.12)" stroke="rgba(120,220,255,0.55)"/>
+  <text x="18" y="32" fill="#7fdcff" font-family="system-ui,Segoe UI,Roboto" font-size="13" letter-spacing="2">FOLLOWERS OVER TIME</text>
+  <text x="18" y="62" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas" font-size="12"><?= esc("ERROR: ".$err) ?></text>
+  <text x="18" y="86" fill="#cfefff" font-family="ui-monospace,Menlo,Consolas" font-size="11"><?= esc("USING: ".$historyPath." (".$size." bytes)") ?></text>
+</svg>
+<?php
+    exit;
+}
+
+/* Compute points */
+$vals = array_map(fn($p) => (int)$p['followers'], $history);
+$minV = min($vals); $maxV = max($vals);
+if ($minV === $maxV) { $minV -= 1; $maxV += 1; }
 
 $n = count($history);
 $pts = [];
-
 for ($i=0; $i<$n; $i++) {
-  $x = $padL + ($plotW * ($i / max($n-1,1)));
-  $v = (int)($history[$i]['followers'] ?? 0);
-  $t = ($v - $minV) / ($maxV - $minV);
-  $y = $padT + ($plotH * (1.0 - $t));
-  $pts[] = [$x, $y, $v, (string)($history[$i]['date'] ?? '')];
+    $x = $padL + ($plotW * ($i / max($n-1,1)));
+    $v = (int)$history[$i]['followers'];
+    $t = ($v - $minV) / ($maxV - $minV);
+    $y = $padT + ($plotH * (1.0 - $t));
+    $pts[] = [$x, $y, $v, (string)$history[$i]['date']];
 }
 
-$poly = implode(' ', array_map(fn($p) => round($p[0],2).','.round($p[1],2), $pts));
-
-$last = $pts[$n-1][2];
+$poly = implode(' ', array_map(fn($p)=>round($p[0],2).','.round($p[1],2), $pts));
 $first = $pts[0][2];
+$last  = $pts[$n-1][2];
 $delta = $last - $first;
-$sign = $delta >= 0 ? '+' : '';
+$sign  = $delta >= 0 ? '+' : '';
 $rangeLabel = $pts[0][3] . ' → ' . $pts[$n-1][3];
+$nowLabel = "now {$last} ({$sign}{$delta})";
+$todayUTC = gmdate('Y-m-d');
 
-echo '<?xml version="1.0" encoding="UTF-8"?>';
+/* Pill helper INLINE */
+$pill = function(float $x, float $y, string $text, int $fs = 12, string $fill = '#ffffff'): string {
+    $padX = 10; $padY = 7;
+    $w = max(60, (int)(strlen($text) * ($fs * 0.62)) + $padX*2);
+    $h = $fs + $padY*2;
+    $rx = 10;
+    $tX = $x + $padX;
+    $tY = $y + $fs + $padY - 2;
+
+    return
+      '<rect x="'.round($x,2).'" y="'.round($y,2).'" width="'.$w.'" height="'.$h.'" rx="'.$rx.'" fill="rgba(0,0,0,0.40)" stroke="rgba(120,220,255,0.55)"/>'.
+      '<text x="'.round($tX,2).'" y="'.round($tY,2).'" fill="'.$fill.'" font-family="ui-monospace,Menlo,Consolas" font-size="'.$fs.'">'.esc($text).'</text>';
+};
+
+/* Area path */
+$areaD = 'M '.$padL.' '.($padT+$plotH).' L ';
+foreach ($pts as $p) $areaD .= round($p[0],2).' '.round($p[1],2).' L ';
+$areaD .= ($padL+$plotW).' '.($padT+$plotH).' Z';
+
+$lp = $pts[$n-1];
+
 ?>
 <svg xmlns="http://www.w3.org/2000/svg" width="<?= $W ?>" height="<?= $H ?>" viewBox="0 0 <?= $W ?> <?= $H ?>">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="rgba(120,220,255,0.28)"/>
-      <stop offset="1" stop-color="rgba(120,220,255,0.03)"/>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="rgba(120,220,255,0.32)"/>
+      <stop offset="1" stop-color="rgba(120,220,255,0.05)"/>
     </linearGradient>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="2.8" result="b"/>
-      <feMerge>
-        <feMergeNode in="b"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+      <feGaussianBlur stdDeviation="2.6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
+    <clipPath id="clipPlot">
+      <rect x="<?= $padL ?>" y="<?= $padT ?>" width="<?= $plotW ?>" height="<?= $plotH ?>" rx="10"/>
+    </clipPath>
   </defs>
 
   <rect x="0" y="0" width="<?= $W ?>" height="<?= $H ?>" fill="rgba(120,200,255,0.12)" stroke="rgba(120,220,255,0.55)"/>
 
-  <text x="18" y="24" fill="#7fdcff" font-family="system-ui,Segoe UI,Roboto" font-size="12" letter-spacing="2">FOLLOWERS OVER TIME</text>
-  <text x="18" y="44" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas" font-size="12"><?= htmlspecialchars($rangeLabel) ?></text>
+  <!-- Header (hors zone plot) -->
+  <text x="18" y="30" fill="#7fdcff" font-family="system-ui,Segoe UI,Roboto" font-size="13" letter-spacing="2">FOLLOWERS OVER TIME</text>
+  <?= $pill(18, 40, $rangeLabel, 12, '#ffffff') ?>
+  <?= $pill($W-260, 40, $nowLabel, 12, '#ffffff') ?>
 
-  <text x="<?= $W-18 ?>" y="24" text-anchor="end" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas" font-size="12">
-    now <?= (int)$last ?> (<?= $sign.(int)$delta ?>)
-  </text>
+  <!-- Plot background -->
+  <rect x="<?= $padL ?>" y="<?= $padT ?>" width="<?= $plotW ?>" height="<?= $plotH ?>" rx="12" fill="rgba(120,200,255,0.10)" stroke="rgba(255,255,255,0.10)"/>
 
-  <?php
-    // grid: 4 lignes
-    for ($g=0; $g<=4; $g++) {
+  <!-- Grid + Y labels -->
+  <?php for ($g=0; $g<=4; $g++):
       $y = $padT + ($plotH * ($g/4));
       $v = (int)round($maxV - (($maxV-$minV)*($g/4)));
-      echo '<line x1="'.$padL.'" y1="'.round($y,2).'" x2="'.($padL+$plotW).'" y2="'.round($y,2).'" stroke="rgba(255,255,255,0.10)"/>';
-      echo '<text x="'.($padL-10).'" y="'.round($y+4,2).'" text-anchor="end" fill="#cfefff" font-family="ui-monospace,Menlo,Consolas" font-size="10">'.$v.'</text>';
-    }
   ?>
+    <line x1="<?= $padL ?>" y1="<?= round($y,2) ?>" x2="<?= $padL+$plotW ?>" y2="<?= round($y,2) ?>" stroke="rgba(255,255,255,0.10)"/>
+    <text x="<?= $padL-12 ?>" y="<?= round($y+4,2) ?>" text-anchor="end" fill="#cfefff" font-family="ui-monospace,Menlo,Consolas" font-size="11"><?= $v ?></text>
+  <?php endfor; ?>
 
-  <!-- area -->
-  <path d="<?php
-      $d = 'M '.$padL.' '.($padT+$plotH).' L ';
-      foreach ($pts as $p) $d .= round($p[0],2).' '.round($p[1],2).' L ';
-      $d .= ($padL+$plotW).' '.($padT+$plotH).' Z';
-      echo $d;
-    ?>" fill="url(#g)" />
+  <!-- Area + Line (clippés) -->
+  <g clip-path="url(#clipPlot)">
+    <path d="<?= esc($areaD) ?>" fill="url(#area)"/>
+    <polyline points="<?= $poly ?>" fill="none" stroke="#33ccff" stroke-width="2.6" filter="url(#glow)"/>
+  </g>
 
-  <!-- line -->
-  <polyline points="<?= $poly ?>" fill="none" stroke="#33ccff" stroke-width="2.2" filter="url(#glow)"/>
+  <!-- Last point -->
+  <circle cx="<?= round($lp[0],2) ?>" cy="<?= round($lp[1],2) ?>" r="5.0" fill="#ffffff" stroke="#33ccff" stroke-width="2"/>
 
-  <!-- last point -->
-  <?php $lp = $pts[$n-1]; ?>
-  <circle cx="<?= round($lp[0],2) ?>" cy="<?= round($lp[1],2) ?>" r="4.5" fill="#ffffff" stroke="#33ccff" stroke-width="2"/>
-
-  <!-- x labels: first & last -->
-  <text x="<?= $padL ?>" y="<?= $H-16 ?>" fill="#cfefff" font-family="ui-monospace,Menlo,Consolas" font-size="10"><?= htmlspecialchars($pts[0][3]) ?></text>
-  <text x="<?= $padL+$plotW ?>" y="<?= $H-16 ?>" text-anchor="end" fill="#cfefff" font-family="ui-monospace,Menlo,Consolas" font-size="10"><?= htmlspecialchars($pts[$n-1][3]) ?></text>
+  <!-- Footer (hors zone plot) -->
+  <?= $pill(18, $H-44, "daily snapshot (UTC): {$todayUTC}", 11, '#cfefff') ?>
 </svg>
