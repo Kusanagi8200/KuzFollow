@@ -84,27 +84,48 @@ if ($needsAppend) {
 <body>
 <div class="wrap">
 
-<header class="hero card">
-  <div class="hero-kicker">THE KUZ NETWORK // GITHUB CONTROL PANEL</div>
-  <div class="hero-title">KUZFOLLOW-GITHUB</div>
-  <div class="hero-subtitle">A KUZ NETWORK SOLUTION // BETA-0.1.2025</div>
-</header>
-
-<section class="card account-card">
-  <div class="account-heading">
-    <div>
-      <div class="eyebrow">ACCOUNT STATUS</div>
-      <h1><?=h($user)?></h1>
+<header class="control-header">
+  <div class="control-header__top">
+    <div class="brand-block">
+      <div class="brand-kicker">THE KUZ NETWORK // LOCAL CONTROL INTERFACE</div>
+      <div class="brand-title">KUZFOLLOW</div>
+      <div class="brand-subtitle">GITHUB NETWORK OPERATIONS // LOCAL / SELF-HOSTED</div>
     </div>
-    <div class="status-dot" aria-label="Active"></div>
+    <div class="header-status">
+      <span class="status-led" aria-hidden="true"></span>
+      <span>ONLINE</span>
+      <span class="status-separator">//</span>
+      <span>BETA-0.1.2025</span>
+    </div>
   </div>
-  <div class="kv">
-    <span class="pill"><strong><?=count($followers)?></strong> FOLLOWERS</span>
-    <span class="pill"><strong><?=count($following)?></strong> FOLLOWING</span>
-    <span class="pill"><strong><?=count($repos)?></strong> REPOS</span>
-    <span class="pill"><a href="#" onclick="openEvents();return false;">EVENTS</a></span>
+
+  <div class="control-header__account">
+    <div class="account-identity">
+      <div class="eyebrow">GITHUB ACCOUNT</div>
+      <h1><?=h($user)?></h1>
+      <div class="account-caption">NETWORK RECIPROCITY / REPOSITORY ACTIVITY / FOLLOW CONTROL</div>
+    </div>
+
+    <div class="header-metrics">
+      <div class="header-metric">
+        <span class="header-metric__label">FOLLOWERS</span>
+        <strong><?=count($followers)?></strong>
+      </div>
+      <div class="header-metric">
+        <span class="header-metric__label">FOLLOWING</span>
+        <strong><?=count($following)?></strong>
+      </div>
+      <div class="header-metric">
+        <span class="header-metric__label">REPOSITORIES</span>
+        <strong><?=count($repos)?></strong>
+      </div>
+      <a class="header-metric header-metric--link" href="#" onclick="openEvents();return false;">
+        <span class="header-metric__label">PUBLIC ACTIVITY</span>
+        <strong>EVENTS</strong>
+      </a>
+    </div>
   </div>
-</section>
+</header>
 
 <?php if ($preview): ?>
 <section class="card preview-card">
@@ -117,23 +138,28 @@ if ($needsAppend) {
 </section>
 <?php endif; ?>
 
-<div class="section-banner">
-  <div class="section-index">01</div>
-  <div class="section-copy">
+<section class="section-header">
+  <div class="section-number">01</div>
+  <div class="section-heading">
     <div class="section-kicker">CODE ACTIVITY</div>
     <h2>REPOSITORIES</h2>
     <p>Owner repositories ranked by latest commit activity.</p>
   </div>
-  <div class="section-line" aria-hidden="true"></div>
-</div>
+  <div class="section-tech">
+    <span>OWNER</span>
+    <span>LATEST COMMIT</span>
+    <span>UTC</span>
+  </div>
+</section>
 
 <section class="card repo-panel">
-  <div class="panel-heading">
+  <div class="panel-heading repo-panel-heading">
     <div>
-      <div class="eyebrow">OWNER / UPDATED</div>
-      <h2>REPOSITORIES - LATEST COMMITS</h2>
+      <div class="eyebrow">REPOSITORY ACTIVITY</div>
+      <h2>LATEST OWNER REPOSITORIES</h2>
+      <p class="panel-description">Latest code activity with commit identity, author and UTC timestamp.</p>
     </div>
-    <div class="panel-count"><?=count($repoCards)?> DISPLAYED</div>
+    <div class="panel-count"><?=count($repoCards)?> / <?=count($repos)?> SHOWN</div>
   </div>
 
   <?php if (!$repoCards): ?>
@@ -157,19 +183,33 @@ if ($needsAppend) {
         ?>
         <article class="repo-item">
           <div class="repo-topline">
-            <a class="repo-name" href="<?=h((string)($r['html_url'] ?? '#'))?>" target="_blank" rel="noopener noreferrer"><?=h((string)($r['name'] ?? 'repo'))?></a>
+            <div class="repo-identity">
+              <div class="repo-label">REPOSITORY</div>
+              <a class="repo-name" href="<?=h((string)($r['html_url'] ?? '#'))?>" target="_blank" rel="noopener noreferrer"><?=h((string)($r['name'] ?? 'repo'))?></a>
+            </div>
             <span class="repo-language"><?=h((string)($r['language'] ?? 'N/A'))?></span>
           </div>
-          <div class="repo-stats">★ <?= (int)($r['stargazers_count'] ?? 0) ?> // FORKS <?= (int)($r['forks_count'] ?? 0) ?></div>
+
+          <div class="repo-facts">
+            <div><span>STARS</span><strong><?= (int)($r['stargazers_count'] ?? 0) ?></strong></div>
+            <div><span>FORKS</span><strong><?= (int)($r['forks_count'] ?? 0) ?></strong></div>
+          </div>
+
           <?php if ($commit): ?>
-            <div class="commit-message"><?=h($message !== '' ? $message : 'NO COMMIT MESSAGE')?></div>
-            <div class="commit-meta">
-              <a href="<?=h((string)($commit['html_url'] ?? '#'))?>" target="_blank" rel="noopener noreferrer">COMMIT <?=h($sha)?></a>
-              <span><?=h($author)?></span>
-              <time datetime="<?=h($commitDate)?>"><?=h($displayDate)?></time>
+            <div class="commit-block">
+              <div class="commit-label">LATEST COMMIT</div>
+              <div class="commit-message"><?=h($message !== '' ? $message : 'NO COMMIT MESSAGE')?></div>
+              <div class="commit-meta">
+                <a href="<?=h((string)($commit['html_url'] ?? '#'))?>" target="_blank" rel="noopener noreferrer"><?=h($sha)?></a>
+                <span><b>AUTHOR</b> <?=h($author)?></span>
+                <time datetime="<?=h($commitDate)?>"><b>UTC</b> <?=h($displayDate)?></time>
+              </div>
             </div>
           <?php else: ?>
-            <div class="commit-meta">COMMIT UNAVAILABLE</div>
+            <div class="commit-block commit-block--empty">
+              <div class="commit-label">LATEST COMMIT</div>
+              <div class="commit-message">COMMIT UNAVAILABLE</div>
+            </div>
           <?php endif; ?>
         </article>
       <?php endforeach; ?>
@@ -177,15 +217,19 @@ if ($needsAppend) {
   <?php endif; ?>
 </section>
 
-<div class="section-banner">
-  <div class="section-index">02</div>
-  <div class="section-copy">
+<section class="section-header">
+  <div class="section-number">02</div>
+  <div class="section-heading">
     <div class="section-kicker">NETWORK CONTROL</div>
     <h2>FOLLOWERS &amp; FOLLOWING</h2>
     <p>Review reciprocity, apply selected changes, and monitor follower history.</p>
   </div>
-  <div class="section-line" aria-hidden="true"></div>
-</div>
+  <div class="section-tech">
+    <span>FOLLOW BACK</span>
+    <span>NON-MUTUAL</span>
+    <span>HISTORY</span>
+  </div>
+</section>
 
 <div class="grid network-grid">
   <section class="card network-card">

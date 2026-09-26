@@ -96,6 +96,8 @@ The web dashboard provides:
 
 - follower, following, and repository totals;
 - a KUZAI-inspired dark cyber-industrial interface with restrained white/cyan accents;
+- an 85% viewport desktop layout with an integrated control header and full-width numbered section containers;
+- structured repository cards separating repository identity, stars/forks, commit message, SHA, author, and UTC timestamp;
 - dedicated `REPOSITORIES` and `FOLLOWERS & FOLLOWING` section headers to keep code activity and relationship management visually separate;
 - up to 12 owner repositories sorted by latest commit date;
 - repository cards showing the latest commit message, short SHA, author, and UTC commit date;
