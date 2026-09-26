@@ -77,6 +77,45 @@ final class GitHubClient
         ]);
     }
 
+    public function reposWithLatestCommits(array $repos, int $limit = 12): array
+    {
+        $selected = array_slice($repos, 0, max(0, $limit));
+
+        foreach ($selected as &$repo) {
+            $repo['latest_commit'] = null;
+            $owner = (string)($repo['owner']['login'] ?? '');
+            $name = (string)($repo['name'] ?? '');
+
+            if ($owner === '' || $name === '') continue;
+
+            try {
+                $commits = $this->request(
+                    'GET',
+                    '/repos/' . rawurlencode($owner) . '/' . rawurlencode($name) . '/commits',
+                    ['per_page' => 1]
+                );
+                if (isset($commits[0]) && is_array($commits[0])) {
+                    $repo['latest_commit'] = $commits[0];
+                }
+            } catch (RuntimeException $e) {
+                // Empty or inaccessible repositories remain visible without commit details.
+            }
+        }
+        unset($repo);
+
+        usort($selected, static function (array $a, array $b): int {
+            $dateA = (string)($a['latest_commit']['commit']['committer']['date']
+                ?? $a['latest_commit']['commit']['author']['date']
+                ?? '');
+            $dateB = (string)($b['latest_commit']['commit']['committer']['date']
+                ?? $b['latest_commit']['commit']['author']['date']
+                ?? '');
+            return strcmp($dateB, $dateA);
+        });
+
+        return $selected;
+    }
+
     public function eventsPublic(string $u, int $limit = 30): array
     {
         return $this->request('GET', "/users/{$u}/events/public", [

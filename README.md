@@ -95,8 +95,9 @@ an API limit or network error.
 The web dashboard provides:
 
 - follower, following, and repository totals;
-- the first 10 followers returned by the API;
-- owner repositories sorted by update time;
+- up to 12 owner repositories sorted by latest commit date;
+- the latest commit message, short SHA, author, and UTC date for each displayed
+  repository;
 - the 30 most recent public events in a dedicated modal;
 - individual selection of accounts to follow;
 - individual selection of non-mutual accounts to unfollow;

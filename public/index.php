@@ -40,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $followers = $gh->followers($user);
 $following = $gh->following($user);
 $repos     = $gh->reposOwnerSorted($user);
+$repoCards = $gh->reposWithLatestCommits($repos, 12);
 $events    = $gh->eventsPublic($user, 30);
 
 $fol = array_column($followers, 'login');
@@ -50,8 +51,6 @@ $theyDontFollowYou = array_values(array_diff($ing, $fol)); // following who don'
 
 sort($youDontFollowBack);
 sort($theyDontFollowYou);
-
-$recentFollowers = array_slice($followers, 0, 10);
 
 /* ===== DAILY SNAPSHOT (followers over time) ===== */
 $dataDir = __DIR__ . '/../data';
@@ -134,29 +133,42 @@ if ($needsAppend) {
 
 <div class="grid">
 
-  <!-- Row 1 -->
-  <div class="card">
-    <h2>10 RECENT FOLLOWERS</h2>
-    <?php if (!$recentFollowers): ?>
-      <div class="item"><div class="meta">none</div></div>
-    <?php else: ?>
-      <?php foreach ($recentFollowers as $f): ?>
-        <div class="item"><?=h((string)($f['login'] ?? ''))?></div>
-      <?php endforeach; ?>
+  <div class="card" style="grid-column:1/-1;">
+    <h2>REPOSITORIES - LATEST COMMITS</h2>
+    <?php if (!$repoCards): ?>
+      <div class="item"><div class="meta">NONE</div></div>
     <?php endif; ?>
-  </div>
-
-  <div class="card">
-    <h2>REPOSITORIES (OWNER / UPDATED)</h2>
-    <?php foreach (array_slice($repos, 0, 12) as $r): ?>
+    <?php foreach ($repoCards as $r): ?>
+      <?php
+        $commit = is_array($r['latest_commit'] ?? null) ? $r['latest_commit'] : null;
+        $message = $commit ? trim((string)($commit['commit']['message'] ?? '')) : '';
+        $message = explode("\n", $message, 2)[0];
+        $sha = $commit ? substr((string)($commit['sha'] ?? ''), 0, 7) : '';
+        $author = $commit
+          ? (string)($commit['author']['login'] ?? $commit['commit']['author']['name'] ?? 'UNKNOWN')
+          : '';
+        $commitDate = $commit
+          ? (string)($commit['commit']['committer']['date'] ?? $commit['commit']['author']['date'] ?? '')
+          : '';
+        $timestamp = $commitDate !== '' ? strtotime($commitDate) : false;
+        $displayDate = $timestamp !== false ? gmdate('Y-m-d H:i \U\T\C', $timestamp) : 'UNKNOWN DATE';
+      ?>
       <div class="item">
         <a href="<?=h((string)($r['html_url'] ?? '#'))?>" target="_blank"><?=h((string)($r['name'] ?? 'repo'))?></a>
         <div class="meta">★<?= (int)($r['stargazers_count'] ?? 0) ?> · forks <?= (int)($r['forks_count'] ?? 0) ?> · <?=h((string)($r['language'] ?? ''))?></div>
+        <?php if ($commit): ?>
+          <div><?=h($message !== '' ? $message : 'NO COMMIT MESSAGE')?></div>
+          <div class="meta">
+            <a href="<?=h((string)($commit['html_url'] ?? '#'))?>" target="_blank">COMMIT <?=h($sha)?></a>
+            · <?=h($author)?> · <?=h($displayDate)?>
+          </div>
+        <?php else: ?>
+          <div class="meta">COMMIT UNAVAILABLE</div>
+        <?php endif; ?>
       </div>
     <?php endforeach; ?>
   </div>
 
-  <!-- Row 2 -->
   <div class="card">
     <h2>FOLLOW BACK</h2>
     <form method="post">
