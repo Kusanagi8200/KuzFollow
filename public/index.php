@@ -53,9 +53,7 @@ sort($youDontFollowBack);
 sort($theyDontFollowYou);
 
 /* ===== DAILY SNAPSHOT (followers over time) ===== */
-$dataDir = __DIR__ . '/../data';
-$historyFile = $dataDir . '/followers_history.json';
-if (!is_dir($dataDir)) @mkdir($dataDir, 0755, true);
+$historyFile = '/var/lib/kuzfollow/followers_history.json';
 
 $today = gmdate('Y-m-d');
 $countFollowers = count($followers);

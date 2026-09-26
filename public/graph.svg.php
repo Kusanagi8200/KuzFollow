@@ -19,9 +19,7 @@ $plotW = $W - $padL - $padR;
 $plotH = $H - $padT - $padB;
 
 /* History */
-$pathA = __DIR__ . '/../data/followers_history.json';
-$pathB = __DIR__ . '/followers_history.json';
-$historyPath = is_file($pathA) ? $pathA : (is_file($pathB) ? $pathB : $pathA);
+$historyPath = '/var/lib/kuzfollow/followers_history.json';
 
 $history = [];
 $err = null;

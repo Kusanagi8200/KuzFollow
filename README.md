@@ -110,8 +110,8 @@ The web dashboard provides:
 The previous recent-followers presentation is not used in the web dashboard; relationship operations are grouped in the dedicated network section.
 
 The web version is independent of the Bash script. It uses
-`src/GitHubClient.php` to call the GitHub API and writes follower history to
-`data/followers_history.json`.
+`src/GitHubClient.php` to call the GitHub API. Runtime follower history is stored outside the repository in
+`/var/lib/kuzfollow/followers_history.json` so dashboard activity never dirties the Git working tree.
 
 ### <kbd>REQUIREMENTS</kbd>
 
@@ -121,7 +121,7 @@ The web version is independent of the Bash script. It uses
 - PHP sessions;
 - Apache with `mod_rewrite`, or an equivalent web server configuration;
 - HTTPS for deployed instances;
-- write access to `data/` for the PHP process.
+- read/write access to `/var/lib/kuzfollow/followers_history.json` for the PHP process.
 
 The web document root must point to `public/`. Under Apache,
 `public/.htaccess` routes requests to `public/index.php`.
@@ -145,9 +145,10 @@ Example preparation on a Linux server:
 ```bash
 sudo install -d -m 750 /etc/kuzfollow
 sudo editor /etc/kuzfollow/config.php
-sudo chown -R www-data:www-data data
-sudo chmod 750 data
+sudo install -d -o www-data -g www-data -m 750 /var/lib/kuzfollow
 ```
+
+Create or migrate `/var/lib/kuzfollow/followers_history.json` with ownership `www-data:www-data` and mode `0640`.
 
 Replace `www-data` with the actual PHP-FPM or web server account. Never publish
 the configuration file or store a real token in the repository.
@@ -163,8 +164,7 @@ Then open `http://127.0.0.1:8080/`. The absolute configuration file at
 
 ### <kbd>HISTORY AND CHART</kbd>
 
-On each dashboard load, `public/index.php` adds at most one history point per
-day and retains the most recent 180 points.
+On each dashboard load, `public/index.php` updates `/var/lib/kuzfollow/followers_history.json`, adds at most one history point per day, and retains the most recent 180 points. The runtime file is intentionally outside the Git repository.
 
 `public/seed_history.php` is an optional initialization utility. It replaces
 the history with 30 synthetic points ending at the current follower count:
@@ -211,7 +211,7 @@ php -l src/GitHubClient.php
 ```
 
 Functional PHP testing requires a valid configuration file, network access to
-the GitHub API, and a writable `data/` directory.
+the GitHub API, and a writable `/var/lib/kuzfollow/followers_history.json` runtime file.
 
 ## <kbd>REPOSITORY STRUCTURE</kbd>
 
@@ -225,7 +225,6 @@ public/assets/style.css      Web interface styles
 public/assets/bg.jpg         Web interface background
 public/.htaccess             Apache route rewriting
 src/GitHubClient.php         PHP GitHub API client
-data/followers_history.json  History used by the chart
 ```
 
 The `.bk` files in the repository are historical copies of selected PHP, CSS,

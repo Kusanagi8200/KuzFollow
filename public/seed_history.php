@@ -38,9 +38,7 @@ $hist[$points-1]['date'] = $today->format('Y-m-d');
 $hist[$points-1]['followers'] = $N;
 
 /* Write the history file */
-$dataDir = __DIR__ . '/../data';
-@mkdir($dataDir, 0755, true);
-$file = $dataDir . '/followers_history.json';
+$file = '/var/lib/kuzfollow/followers_history.json';
 file_put_contents($file, json_encode($hist, JSON_UNESCAPED_SLASHES));
 
 echo "OK\n";
