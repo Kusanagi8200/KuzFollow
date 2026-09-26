@@ -1,4 +1,11 @@
-# KuzFollow
+# <kbd>KUZFOLLOW</kbd>
+
+![STATUS](https://img.shields.io/badge/STATUS-ACTIVE-64D8E8?style=flat-square&labelColor=555555)
+![DEPLOYMENT](https://img.shields.io/badge/DEPLOYMENT-LOCAL%20%7C%20SELF--HOSTED-79B8FF?style=flat-square&labelColor=555555)
+![RUNTIME](https://img.shields.io/badge/RUNTIME-BASH%20%7C%20PHP-CB9BFF?style=flat-square&labelColor=555555)
+![PLATFORM](https://img.shields.io/badge/PLATFORM-LINUX%20%7C%20MACOS-F2F2F2?style=flat-square&labelColor=555555&logo=linux&logoColor=black)
+
+> <kbd>ANALYZE YOUR GITHUB NETWORK. KEEP EVERY ACTION EXPLICIT.</kbd>
 
 KuzFollow analyzes a GitHub account's followers, following list, mutual
 connections, and accounts to follow or unfollow.
@@ -15,7 +22,7 @@ The terminal application and its tests are written entirely in Bash. The
 existing web application uses PHP, HTML, CSS, and a small inline JavaScript
 section.
 
-## Shared features
+## <kbd>SHARED FEATURES</kbd>
 
 - Paginated retrieval of followers and followed accounts.
 - Detection of non-mutual connections.
@@ -23,9 +30,9 @@ section.
 - Display of public repositories and recent public activity.
 - GitHub token configuration outside the repository.
 
-## Bash terminal version
+## <kbd>BASH TERMINAL VERSION</kbd>
 
-### Interface
+### <kbd>INTERFACE</kbd>
 
 The historical ASCII logo is displayed in terminals that are at least 80
 columns wide. A compact header is used automatically in narrower terminals.
@@ -52,7 +59,7 @@ The menu retains the following UX and safety improvements:
 - report-only behavior when input or output is not a terminal;
 - color disabling with `NO_COLOR=1`, `TERM=dumb`, or redirected output.
 
-### Requirements
+### <kbd>REQUIREMENTS</kbd>
 
 - Bash 4 or newer;
 - `curl`;
@@ -61,7 +68,7 @@ The menu retains the following UX and safety improvements:
 
 On macOS, install a recent Bash release instead of using the system Bash 3.
 
-### Installation and usage
+### <kbd>INSTALLATION AND USAGE</kbd>
 
 ```bash
 git clone https://github.com/Kusanagi8200/KuzFollow.git
@@ -97,9 +104,9 @@ Run the script again after a batch action to refresh the statistics. Action
 requests have a one-second delay. The script does not retry automatically after
 an API limit or network error.
 
-## PHP web version
+## <kbd>PHP WEB VERSION</kbd>
 
-### Features
+### <kbd>FEATURES</kbd>
 
 The web dashboard provides:
 
@@ -118,7 +125,7 @@ The web version is independent of the Bash script. It uses
 `src/GitHubClient.php` to call the GitHub API and writes follower history to
 `data/followers_history.json`.
 
-### Requirements
+### <kbd>REQUIREMENTS</kbd>
 
 - PHP 7.4 or newer;
 - PHP cURL extension;
@@ -131,7 +138,7 @@ The web version is independent of the Bash script. It uses
 The web document root must point to `public/`. Under Apache,
 `public/.htaccess` routes requests to `public/index.php`.
 
-### Configuration
+### <kbd>CONFIGURATION</kbd>
 
 The PHP application reads its configuration from
 `/etc/kuzfollow/config.php`. Keep this file outside the repository and outside
@@ -166,7 +173,7 @@ php -S 127.0.0.1:8080 -t public
 Then open `http://127.0.0.1:8080/`. The absolute configuration file at
 `/etc/kuzfollow/config.php` must already exist.
 
-### History and chart
+### <kbd>HISTORY AND CHART</kbd>
 
 On each dashboard load, `public/index.php` adds at most one history point per
 day and retains the most recent 180 points.
@@ -180,16 +187,16 @@ php public/seed_history.php
 
 Run this command only when you intentionally want to reset the history file.
 
-### Interface protection
+### <kbd>INTERFACE PROTECTION</kbd>
 
 The PHP interface can modify GitHub relationships and does not include its own
 login system. Place it behind web server or reverse proxy authentication and
 restrict access to authorized users. Use `DRY-RUN` to review targets before a
 real action.
 
-## Tests
+## <kbd>TESTS</kbd>
 
-### Bash
+### <kbd>BASH</kbd>
 
 The offline test suite intercepts every HTTP request. It does not follow or
 unfollow any real account.
@@ -204,7 +211,7 @@ The suite covers pagination, API errors, non-interactive reports, terminal
 widths, the ASCII logo, colors, menu navigation, cancellation, confirmation,
 and end-of-input behavior.
 
-### PHP
+### <kbd>PHP</kbd>
 
 Check the syntax of the PHP files:
 
@@ -218,7 +225,7 @@ php -l src/GitHubClient.php
 Functional PHP testing requires a valid configuration file, network access to
 the GitHub API, and a writable `data/` directory.
 
-## Repository structure
+## <kbd>REPOSITORY STRUCTURE</kbd>
 
 ```text
 KuzFollow.sh                 Bash terminal application
