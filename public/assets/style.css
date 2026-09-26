@@ -140,25 +140,88 @@ a{color:inherit;text-decoration:none}
 .dynamic-invert:hover *,
 .dynamic-invert:focus-within *{color:#000!important}
 
-.project-statement{
+.scan-control{
   width:100%;
   margin:0 0 26px;
-  padding:8px 18px;
-  border-top:1px solid var(--border-soft);
-  border-bottom:1px solid var(--border-soft);
-  text-align:center;
-  cursor:default;
 }
 
-.project-statement p{
-  margin:0;
+.scan-button{
+  width:100%;
+  min-height:46px;
+  padding:8px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  position:relative;
+  overflow:hidden;
+  border-top:1px solid var(--border-soft);
+  border-bottom:1px solid var(--border-soft);
+  border-left:0;
+  border-right:0;
+  background-color:#000;
+  background-image:linear-gradient(#fff,#fff);
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:0 100%;
+  color:#fff;
+  cursor:pointer;
+  text-transform:uppercase;
+  transition:
+    background-size 340ms ease,
+    color 260ms ease,
+    border-color 300ms ease,
+    letter-spacing 300ms ease,
+    transform 300ms ease;
+}
+
+.scan-button:hover,
+.scan-button:focus-visible{
+  background-size:100% 100%;
+  color:#000;
+  border-top-color:#fff;
+  border-bottom-color:#fff;
+  letter-spacing:.015em;
+  transform:translateY(-1px);
+}
+
+.scan-button:disabled{
+  cursor:wait;
+  opacity:.72;
+}
+
+.scan-button.is-scanning{
+  background-size:100% 100%;
+  color:#000;
+}
+
+.scan-button__label{
   font-size:clamp(.92rem,1.18vw,1.25rem);
   line-height:1.35;
   letter-spacing:.05em;
-  text-transform:uppercase;
 }
 
-.project-statement:hover{letter-spacing:.015em;transform:translateY(-1px)}
+.scan-button__meta{
+  color:var(--text-dim);
+  font-size:.68rem;
+  letter-spacing:.10em;
+}
+
+.scan-button:hover .scan-button__meta,
+.scan-button:focus-visible .scan-button__meta,
+.scan-button.is-scanning .scan-button__meta{
+  color:#333;
+}
+
+.scan-error{
+  margin:-10px 0 24px;
+  padding:10px 14px;
+  border:1px solid #555;
+  color:#d8d8d8;
+  font-size:.76rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
 
 .meta-grid{
   display:grid;
@@ -633,8 +696,9 @@ a{color:inherit;text-decoration:none}
   .header-title-block__title,.header-title-block__meta{text-align:left;white-space:normal}
   .header-title-block__title{font-size:clamp(1.2rem,6vw,2rem);line-height:1}
   .header-title-block__meta{font-size:.52rem;line-height:1.35}
-  .project-statement{padding:7px 10px}
-  .project-statement p{font-size:.72rem}
+  .scan-button{padding:7px 10px;flex-direction:column;gap:3px}
+  .scan-button__label{font-size:.76rem}
+  .scan-button__meta{font-size:.58rem}
   .meta-grid{grid-template-columns:1fr}
   .section-title{padding:12px 10px}
   .section-heading-line{gap:10px}

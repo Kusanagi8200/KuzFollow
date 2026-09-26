@@ -11,37 +11,120 @@ $user  = (string)($config['github_user'] ?? '');
 $token = (string)($config['github_token'] ?? '');
 if ($user === '' || $token === '') { http_response_code(500); exit('Server not configured'); }
 
-$gh = new GitHubClient($token);
 $preview = null;
+$scanError = null;
+$snapshotFile = '/var/lib/kuzfollow/snapshot.json';
+$historyFile = '/var/lib/kuzfollow/followers_history.json';
 
-/* ===== ACTIONS + DRY-RUN ===== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $action = (string)($_POST['action'] ?? '');
-  $users  = $_POST['users'] ?? [];
-  $dry    = isset($_POST['dry']);
+function loadSnapshot(string $path): array
+{
+  if (!is_file($path)) return [];
 
-  if (!is_array($users)) $users = [];
-  $users = array_values(array_unique(array_values(array_filter(array_map('trim', array_map('strval', $users))))));
+  $raw = file_get_contents($path);
+  $json = json_decode($raw ?: '[]', true);
 
-  if ($dry) {
-    $preview = ['action' => $action, 'users' => $users];
-  } else {
-    foreach ($users as $u) {
-      if ($action === 'follow')   $gh->follow($u);
-      if ($action === 'unfollow') $gh->unfollow($u);
-      usleep(300000);
-    }
-    header('Location: /');
-    exit;
+  return is_array($json) ? $json : [];
+}
+
+function saveSnapshot(string $path, array $snapshot): void
+{
+  $json = json_encode($snapshot, JSON_UNESCAPED_SLASHES);
+  if ($json === false || file_put_contents($path, $json, LOCK_EX) === false) {
+    throw new RuntimeException('Unable to write runtime snapshot');
+  }
+  @chmod($path, 0640);
+}
+
+function updateFollowerHistory(string $path, int $count): void
+{
+  $today = gmdate('Y-m-d');
+  $hist = [];
+
+  if (is_file($path)) {
+    $raw = file_get_contents($path);
+    $json = json_decode($raw ?: '[]', true);
+    if (is_array($json)) $hist = $json;
+  }
+
+  $last = end($hist);
+  $needsAppend = !is_array($last) || (($last['date'] ?? '') !== $today);
+
+  if ($needsAppend) {
+    $hist[] = ['date' => $today, 'followers' => $count];
+    if (count($hist) > 180) $hist = array_slice($hist, -180);
+    file_put_contents($path, json_encode(array_values($hist), JSON_UNESCAPED_SLASHES), LOCK_EX);
+    @chmod($path, 0640);
   }
 }
 
-/* ===== DATA ===== */
-$followers = $gh->followers($user);
-$following = $gh->following($user);
-$repos     = $gh->reposOwnerSorted($user);
-$repoCards = $gh->reposWithLatestCommits($repos, 12);
-$events    = $gh->eventsPublic($user, 30);
+/* ===== EXPLICIT ACTIONS ONLY ===== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $action = (string)($_POST['action'] ?? '');
+
+  if ($action === 'scan') {
+    try {
+      $gh = new GitHubClient($token);
+
+      $followersScan = $gh->followers($user);
+      $followingScan = $gh->following($user);
+      $reposScan = $gh->reposOwnerSorted($user);
+      $repoCardsScan = $gh->reposWithLatestCommits($reposScan, 12);
+      $eventsScan = $gh->eventsPublic($user, 30);
+
+      saveSnapshot($snapshotFile, [
+        'scanned_at' => gmdate('c'),
+        'followers' => $followersScan,
+        'following' => $followingScan,
+        'repos' => $reposScan,
+        'repo_cards' => $repoCardsScan,
+        'events' => $eventsScan,
+      ]);
+
+      updateFollowerHistory($historyFile, count($followersScan));
+
+      header('Location: /?scan=ok');
+      exit;
+    } catch (RuntimeException $e) {
+      $scanError = $e->getMessage();
+    }
+  } else {
+    $users = $_POST['users'] ?? [];
+    $dry = isset($_POST['dry']);
+
+    if (!is_array($users)) $users = [];
+    $users = array_values(array_unique(array_values(array_filter(array_map('trim', array_map('strval', $users))))));
+
+    if ($dry) {
+      $preview = ['action' => $action, 'users' => $users];
+    } elseif ($action === 'follow' || $action === 'unfollow') {
+      $gh = new GitHubClient($token);
+
+      foreach ($users as $u) {
+        if ($action === 'follow') $gh->follow($u);
+        if ($action === 'unfollow') $gh->unfollow($u);
+        usleep(300000);
+      }
+
+      header('Location: /');
+      exit;
+    }
+  }
+}
+
+/* ===== DISPLAY DATA: LOCAL SNAPSHOT ONLY ===== */
+$snapshot = loadSnapshot($snapshotFile);
+
+$followers = is_array($snapshot['followers'] ?? null) ? $snapshot['followers'] : [];
+$following = is_array($snapshot['following'] ?? null) ? $snapshot['following'] : [];
+$repos = is_array($snapshot['repos'] ?? null) ? $snapshot['repos'] : [];
+$repoCards = is_array($snapshot['repo_cards'] ?? null) ? $snapshot['repo_cards'] : [];
+$events = is_array($snapshot['events'] ?? null) ? $snapshot['events'] : [];
+$scannedAt = (string)($snapshot['scanned_at'] ?? '');
+
+$scanTimestamp = $scannedAt !== '' ? strtotime($scannedAt) : false;
+$lastScanDisplay = $scanTimestamp !== false
+  ? gmdate('Y-m-d H:i \U\T\C', $scanTimestamp)
+  : 'NEVER';
 
 $fol = array_column($followers, 'login');
 $ing = array_column($following, 'login');
@@ -51,26 +134,6 @@ $theyDontFollowYou = array_values(array_diff($ing, $fol));
 
 sort($youDontFollowBack);
 sort($theyDontFollowYou);
-
-/* ===== DAILY SNAPSHOT (followers over time) ===== */
-$historyFile = '/var/lib/kuzfollow/followers_history.json';
-
-$today = gmdate('Y-m-d');
-$countFollowers = count($followers);
-
-$hist = [];
-if (is_file($historyFile)) {
-  $raw = file_get_contents($historyFile);
-  $j = json_decode($raw ?: '[]', true);
-  if (is_array($j)) $hist = $j;
-}
-$last = end($hist);
-$needsAppend = !is_array($last) || (($last['date'] ?? '') !== $today);
-if ($needsAppend) {
-  $hist[] = ['date' => $today, 'followers' => $countFollowers];
-  if (count($hist) > 180) $hist = array_slice($hist, -180);
-  file_put_contents($historyFile, json_encode(array_values($hist), JSON_UNESCAPED_SLASHES));
-}
 ?>
 <!doctype html>
 <html lang="en">
@@ -80,7 +143,7 @@ if ($needsAppend) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
-<link rel="stylesheet" href="/assets/style.css?v=3.0.1">
+<link rel="stylesheet" href="/assets/style.css?v=3.1.0">
 </head>
 <body>
 <div class="site-shell">
@@ -99,9 +162,17 @@ if ($needsAppend) {
   </header>
 
   <main class="site-main">
-    <section class="project-statement dynamic-invert" aria-label="KuzFollow status">
-      <p>KUZFOLLOW / GITHUB NETWORK CONTROL / <?=count($followers)?> FOLLOWERS / <?=count($following)?> FOLLOWING / <?=count($repos)?> REPOSITORIES</p>
-    </section>
+    <form class="scan-control" method="post" id="github-scan-form">
+      <input type="hidden" name="action" value="scan">
+      <button class="scan-button" type="submit" id="github-scan-button">
+        <span class="scan-button__label">SCAN GITHUB / UPDATE DATA</span>
+        <span class="scan-button__meta">LAST SCAN: <?=h($lastScanDisplay)?></span>
+      </button>
+    </form>
+
+    <?php if ($scanError !== null): ?>
+      <div class="scan-error">SCAN FAILED // <?=h($scanError)?></div>
+    <?php endif; ?>
 
     <section class="meta-grid" aria-label="GitHub account summary">
       <div class="meta-card dynamic-invert"><span>GITHUB ACCOUNT</span><strong><?=h($user)?></strong></div>
@@ -296,6 +367,15 @@ if ($needsAppend) {
 <script>
 function openEvents(){document.getElementById('events').classList.add('is-open')}
 function closeEvents(){document.getElementById('events').classList.remove('is-open')}
+
+document.getElementById('github-scan-form').addEventListener('submit', function () {
+  const button = document.getElementById('github-scan-button');
+  const label = button.querySelector('.scan-button__label');
+
+  button.disabled = true;
+  button.classList.add('is-scanning');
+  label.textContent = 'SCANNING GITHUB...';
+});
 </script>
 </body>
 </html>

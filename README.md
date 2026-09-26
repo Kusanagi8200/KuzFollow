@@ -94,7 +94,8 @@ an API limit or network error.
 
 The web dashboard provides:
 
-- follower, following, and repository totals;
+- follower, following, and repository totals loaded from a local runtime snapshot;
+- a manual GitHub scan button that refreshes dashboard data only on explicit user action;
 - a KUZAI-inspired dark cyber-industrial interface with restrained white/cyan accents;
 - an 85% viewport desktop layout with an integrated control header and full-width numbered section containers;
 - structured repository cards separating repository identity, stars/forks, commit message, SHA, author, and UTC timestamp;
@@ -113,7 +114,7 @@ The previous recent-followers presentation is not used in the web dashboard; rel
 
 The web version is independent of the Bash script. It uses
 `src/GitHubClient.php` to call the GitHub API. Runtime follower history is stored outside the repository in
-`/var/lib/kuzfollow/followers_history.json` so dashboard activity never dirties the Git working tree.
+`/var/lib/kuzfollow/followers_history.json` so dashboard activity never dirties the Git working tree. The latest dashboard API snapshot is stored in `/var/lib/kuzfollow/snapshot.json`.
 
 ### <kbd>REQUIREMENTS</kbd>
 
@@ -123,7 +124,7 @@ The web version is independent of the Bash script. It uses
 - PHP sessions;
 - Apache with `mod_rewrite`, or an equivalent web server configuration;
 - HTTPS for deployed instances;
-- read/write access to `/var/lib/kuzfollow/followers_history.json` for the PHP process.
+- read/write access to `/var/lib/kuzfollow/` for the PHP process so it can maintain `followers_history.json` and `snapshot.json`.
 
 The web document root must point to `public/`. Under Apache,
 `public/.htaccess` routes requests to `public/index.php`.
@@ -166,7 +167,7 @@ Then open `http://127.0.0.1:8080/`. The absolute configuration file at
 
 ### <kbd>HISTORY AND CHART</kbd>
 
-On each dashboard load, `public/index.php` updates `/var/lib/kuzfollow/followers_history.json`, adds at most one history point per day, and retains the most recent 180 points. The runtime file is intentionally outside the Git repository.
+The dashboard does not query GitHub on page load. Clicking `SCAN GITHUB / UPDATE DATA` explicitly refreshes `/var/lib/kuzfollow/snapshot.json`, updates `/var/lib/kuzfollow/followers_history.json`, adds at most one history point per day, and retains the most recent 180 history points. Both runtime files are intentionally outside the Git repository.
 
 `public/seed_history.php` is an optional initialization utility. It replaces
 the history with 30 synthetic points ending at the current follower count:
