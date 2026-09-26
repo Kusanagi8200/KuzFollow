@@ -76,237 +76,217 @@ if ($needsAppend) {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>KUZFOLLOW-GITHUB</title>
+<title>KUZFOLLOW - GITHUB NETWORK CONTROL</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
-<link rel="stylesheet" href="/assets/style.css">
+<link rel="stylesheet" href="/assets/style.css?v=3.0.0">
 </head>
 <body>
-<div class="wrap">
+<div class="site-shell">
 
-<header class="control-header">
-  <div class="control-header__top">
-    <div class="brand-block">
-      <div class="brand-kicker">THE KUZ NETWORK // LOCAL CONTROL INTERFACE</div>
-      <div class="brand-title">KUZFOLLOW</div>
-      <div class="brand-subtitle">GITHUB NETWORK OPERATIONS // LOCAL / SELF-HOSTED</div>
-    </div>
-    <div class="header-status">
-      <span class="status-led" aria-hidden="true"></span>
-      <span>ONLINE</span>
-      <span class="status-separator">//</span>
-      <span>BETA-0.1.2025</span>
-    </div>
-  </div>
-
-  <div class="control-header__account">
-    <div class="account-identity">
-      <div class="eyebrow">GITHUB ACCOUNT</div>
-      <h1><?=h($user)?></h1>
-      <div class="account-caption">NETWORK RECIPROCITY / REPOSITORY ACTIVITY / FOLLOW CONTROL</div>
+  <header class="site-header" aria-label="KuzFollow header">
+    <div class="brand-mark" aria-label="The Kuz Network">
+      <img class="brand-mark__logo" src="/assets/kuz_network_logo_transparent.svg" alt="KUZ Network logo" width="112" height="112">
     </div>
 
-    <div class="header-metrics">
-      <div class="header-metric">
-        <span class="header-metric__label">FOLLOWERS</span>
-        <strong><?=count($followers)?></strong>
+    <div class="header-title-block" aria-label="Project title">
+      <h1 class="header-title-block__title">KUZFOLLOW - GITHUB CONTROL</h1>
+      <p class="header-title-block__meta">A KUZ NETWORK SOLUTION - LOCAL / SELF-HOSTED</p>
+    </div>
+
+    <div class="site-header__right-spacer" aria-hidden="true"></div>
+  </header>
+
+  <main class="site-main">
+    <section class="project-statement dynamic-invert" aria-label="KuzFollow status">
+      <p>KUZFOLLOW / GITHUB NETWORK CONTROL / <?=count($followers)?> FOLLOWERS / <?=count($following)?> FOLLOWING / <?=count($repos)?> REPOSITORIES</p>
+    </section>
+
+    <section class="meta-grid" aria-label="GitHub account summary">
+      <div class="meta-card dynamic-invert"><span>GITHUB ACCOUNT</span><strong><?=h($user)?></strong></div>
+      <div class="meta-card dynamic-invert"><span>FOLLOWERS</span><strong><?=count($followers)?></strong></div>
+      <div class="meta-card dynamic-invert"><span>FOLLOWING</span><strong><?=count($following)?></strong></div>
+      <a class="meta-card dynamic-invert" href="#" onclick="openEvents();return false;"><span>PUBLIC ACTIVITY</span><strong>EVENTS</strong></a>
+    </section>
+
+    <?php if ($preview): ?>
+      <section class="kuz-panel preview-panel">
+        <div class="panel-title dynamic-invert">
+          <span class="panel-index">DRY</span>
+          <div><p class="section-kicker">SAFE PREVIEW</p><h2><?=h(strtoupper($preview['action']))?> / <?=count($preview['users'])?> TARGETS</h2></div>
+        </div>
+        <div class="target-list">
+          <?php foreach ($preview['users'] as $u): ?>
+            <div class="target-item"><?=h($u)?></div>
+          <?php endforeach; ?>
+        </div>
+      </section>
+    <?php endif; ?>
+
+    <section class="section-title dynamic-invert" aria-labelledby="repo-section-title">
+      <span class="section-number">01</span>
+      <div>
+        <p class="section-kicker">CODE ACTIVITY</p>
+        <h2 id="repo-section-title">REPOSITORIES</h2>
+        <p class="section-description">Owner repositories ranked by latest commit activity.</p>
       </div>
-      <div class="header-metric">
-        <span class="header-metric__label">FOLLOWING</span>
-        <strong><?=count($following)?></strong>
+    </section>
+
+    <section class="kuz-panel repo-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">OWNER / LATEST COMMIT / UTC</p>
+          <h3>LATEST OWNER REPOSITORIES</h3>
+          <p class="panel-description">Repository identity, code activity, commit author and timestamp.</p>
+        </div>
+        <div class="panel-counter"><?=count($repoCards)?> / <?=count($repos)?> SHOWN</div>
       </div>
-      <div class="header-metric">
-        <span class="header-metric__label">REPOSITORIES</span>
-        <strong><?=count($repos)?></strong>
-      </div>
-      <a class="header-metric header-metric--link" href="#" onclick="openEvents();return false;">
-        <span class="header-metric__label">PUBLIC ACTIVITY</span>
-        <strong>EVENTS</strong>
-      </a>
-    </div>
-  </div>
-</header>
 
-<?php if ($preview): ?>
-<section class="card preview-card">
-  <div class="eyebrow">SAFE PREVIEW</div>
-  <h2>DRY-RUN</h2>
-  <div class="meta">ACTION <?=h(strtoupper($preview['action']))?> // TARGETS <?=count($preview['users'])?></div>
-  <?php foreach ($preview['users'] as $u): ?>
-    <div class="item"><?=h($u)?></div>
-  <?php endforeach; ?>
-</section>
-<?php endif; ?>
-
-<section class="section-header">
-  <div class="section-number">01</div>
-  <div class="section-heading">
-    <div class="section-kicker">CODE ACTIVITY</div>
-    <h2>REPOSITORIES</h2>
-    <p>Owner repositories ranked by latest commit activity.</p>
-  </div>
-  <div class="section-tech">
-    <span>OWNER</span>
-    <span>LATEST COMMIT</span>
-    <span>UTC</span>
-  </div>
-</section>
-
-<section class="card repo-panel">
-  <div class="panel-heading repo-panel-heading">
-    <div>
-      <div class="eyebrow">REPOSITORY ACTIVITY</div>
-      <h2>LATEST OWNER REPOSITORIES</h2>
-      <p class="panel-description">Latest code activity with commit identity, author and UTC timestamp.</p>
-    </div>
-    <div class="panel-count"><?=count($repoCards)?> / <?=count($repos)?> SHOWN</div>
-  </div>
-
-  <?php if (!$repoCards): ?>
-    <div class="item empty-state"><div class="meta">NO REPOSITORIES AVAILABLE</div></div>
-  <?php else: ?>
-    <div class="repo-grid">
-      <?php foreach ($repoCards as $r): ?>
-        <?php
-          $commit = is_array($r['latest_commit'] ?? null) ? $r['latest_commit'] : null;
-          $message = $commit ? trim((string)($commit['commit']['message'] ?? '')) : '';
-          $message = explode("\n", $message, 2)[0];
-          $sha = $commit ? substr((string)($commit['sha'] ?? ''), 0, 7) : '';
-          $author = $commit
-            ? (string)($commit['author']['login'] ?? $commit['commit']['author']['name'] ?? 'UNKNOWN')
-            : '';
-          $commitDate = $commit
-            ? (string)($commit['commit']['committer']['date'] ?? $commit['commit']['author']['date'] ?? '')
-            : '';
-          $timestamp = $commitDate !== '' ? strtotime($commitDate) : false;
-          $displayDate = $timestamp !== false ? gmdate('Y-m-d H:i \U\T\C', $timestamp) : 'UNKNOWN DATE';
-        ?>
-        <article class="repo-item">
-          <div class="repo-topline">
-            <div class="repo-identity">
-              <div class="repo-label">REPOSITORY</div>
-              <a class="repo-name" href="<?=h((string)($r['html_url'] ?? '#'))?>" target="_blank" rel="noopener noreferrer"><?=h((string)($r['name'] ?? 'repo'))?></a>
-            </div>
-            <span class="repo-language"><?=h((string)($r['language'] ?? 'N/A'))?></span>
-          </div>
-
-          <div class="repo-facts">
-            <div><span>STARS</span><strong><?= (int)($r['stargazers_count'] ?? 0) ?></strong></div>
-            <div><span>FORKS</span><strong><?= (int)($r['forks_count'] ?? 0) ?></strong></div>
-          </div>
-
-          <?php if ($commit): ?>
-            <div class="commit-block">
-              <div class="commit-label">LATEST COMMIT</div>
-              <div class="commit-message"><?=h($message !== '' ? $message : 'NO COMMIT MESSAGE')?></div>
-              <div class="commit-meta">
-                <a href="<?=h((string)($commit['html_url'] ?? '#'))?>" target="_blank" rel="noopener noreferrer"><?=h($sha)?></a>
-                <span><b>AUTHOR</b> <?=h($author)?></span>
-                <time datetime="<?=h($commitDate)?>"><b>UTC</b> <?=h($displayDate)?></time>
+      <?php if (!$repoCards): ?>
+        <div class="empty-state">NO REPOSITORIES AVAILABLE</div>
+      <?php else: ?>
+        <div class="repo-grid">
+          <?php foreach ($repoCards as $r): ?>
+            <?php
+              $commit = is_array($r['latest_commit'] ?? null) ? $r['latest_commit'] : null;
+              $message = $commit ? trim((string)($commit['commit']['message'] ?? '')) : '';
+              $message = explode("\n", $message, 2)[0];
+              $sha = $commit ? substr((string)($commit['sha'] ?? ''), 0, 7) : '';
+              $author = $commit
+                ? (string)($commit['author']['login'] ?? $commit['commit']['author']['name'] ?? 'UNKNOWN')
+                : '';
+              $commitDate = $commit
+                ? (string)($commit['commit']['committer']['date'] ?? $commit['commit']['author']['date'] ?? '')
+                : '';
+              $timestamp = $commitDate !== '' ? strtotime($commitDate) : false;
+              $displayDate = $timestamp !== false ? gmdate('Y-m-d H:i \U\T\C', $timestamp) : 'UNKNOWN DATE';
+            ?>
+            <article class="repo-card dynamic-invert">
+              <div class="repo-card__top">
+                <div>
+                  <span class="repo-card__label">REPOSITORY</span>
+                  <a class="repo-card__name" href="<?=h((string)($r['html_url'] ?? '#'))?>" target="_blank" rel="noopener noreferrer"><?=h((string)($r['name'] ?? 'repo'))?></a>
+                </div>
+                <span class="repo-card__language"><?=h((string)($r['language'] ?? 'N/A'))?></span>
               </div>
-            </div>
-          <?php else: ?>
-            <div class="commit-block commit-block--empty">
-              <div class="commit-label">LATEST COMMIT</div>
-              <div class="commit-message">COMMIT UNAVAILABLE</div>
-            </div>
-          <?php endif; ?>
-        </article>
-      <?php endforeach; ?>
-    </div>
-  <?php endif; ?>
-</section>
 
-<section class="section-header">
-  <div class="section-number">02</div>
-  <div class="section-heading">
-    <div class="section-kicker">NETWORK CONTROL</div>
-    <h2>FOLLOWERS &amp; FOLLOWING</h2>
-    <p>Review reciprocity, apply selected changes, and monitor follower history.</p>
-  </div>
-  <div class="section-tech">
-    <span>FOLLOW BACK</span>
-    <span>NON-MUTUAL</span>
-    <span>HISTORY</span>
-  </div>
-</section>
+              <div class="repo-card__stats">
+                <span>STARS <strong><?= (int)($r['stargazers_count'] ?? 0) ?></strong></span>
+                <span>FORKS <strong><?= (int)($r['forks_count'] ?? 0) ?></strong></span>
+              </div>
 
-<div class="grid network-grid">
-  <section class="card network-card">
-    <div class="panel-heading">
-      <div>
-        <div class="eyebrow">INBOUND</div>
-        <h2>FOLLOW BACK</h2>
-      </div>
-      <div class="panel-count"><?=count($youDontFollowBack)?> TARGETS</div>
-    </div>
-    <form method="post">
-      <input type="hidden" name="action" value="follow">
-      <?php if (!$youDontFollowBack): ?>
-        <div class="item empty-state"><div class="meta">NO ACCOUNTS TO FOLLOW BACK</div></div>
-      <?php else: ?>
-        <?php foreach ($youDontFollowBack as $u): ?>
-          <label class="item selectable"><input type="checkbox" name="users[]" value="<?=h($u)?>"> <span><?=h($u)?></span></label>
-        <?php endforeach; ?>
+              <?php if ($commit): ?>
+                <div class="commit-block">
+                  <span class="repo-card__label">LATEST COMMIT</span>
+                  <p class="commit-message"><?=h($message !== '' ? $message : 'NO COMMIT MESSAGE')?></p>
+                  <div class="commit-meta">
+                    <a href="<?=h((string)($commit['html_url'] ?? '#'))?>" target="_blank" rel="noopener noreferrer">COMMIT <?=h($sha)?></a>
+                    <span>AUTHOR <?=h($author)?></span>
+                    <time datetime="<?=h($commitDate)?>"><?=h($displayDate)?></time>
+                  </div>
+                </div>
+              <?php else: ?>
+                <div class="commit-block">
+                  <span class="repo-card__label">LATEST COMMIT</span>
+                  <p class="commit-message">COMMIT UNAVAILABLE</p>
+                </div>
+              <?php endif; ?>
+            </article>
+          <?php endforeach; ?>
+        </div>
       <?php endif; ?>
-      <label class="dry-run"><input type="checkbox" name="dry"> DRY-RUN</label>
-      <button class="btn">FOLLOW SELECTED</button>
-    </form>
-  </section>
+    </section>
 
-  <section class="card network-card">
-    <div class="panel-heading">
+    <section class="section-title dynamic-invert" aria-labelledby="network-section-title">
+      <span class="section-number">02</span>
       <div>
-        <div class="eyebrow">OUTBOUND</div>
-        <h2>UNFOLLOW NON-MUTUAL</h2>
+        <p class="section-kicker">NETWORK CONTROL</p>
+        <h2 id="network-section-title">FOLLOWERS &amp; FOLLOWING</h2>
+        <p class="section-description">Review reciprocity, apply selected changes, and monitor follower history.</p>
       </div>
-      <div class="panel-count"><?=count($theyDontFollowYou)?> TARGETS</div>
-    </div>
-    <form method="post">
-      <input type="hidden" name="action" value="unfollow">
-      <?php if (!$theyDontFollowYou): ?>
-        <div class="item empty-state"><div class="meta">NO NON-MUTUAL ACCOUNTS</div></div>
-      <?php else: ?>
-        <?php foreach ($theyDontFollowYou as $u): ?>
-          <label class="item selectable"><input type="checkbox" name="users[]" value="<?=h($u)?>"> <span><?=h($u)?></span></label>
-        <?php endforeach; ?>
-      <?php endif; ?>
-      <label class="dry-run"><input type="checkbox" name="dry"> DRY-RUN</label>
-      <button class="btn alt">UNFOLLOW SELECTED</button>
-    </form>
-  </section>
+    </section>
 
-  <section class="card graph-card">
-    <div class="panel-heading">
-      <div>
-        <div class="eyebrow">HISTORY</div>
-        <h2>FOLLOWERS OVER TIME</h2>
-      </div>
-      <div class="panel-count">180 DAYS MAX</div>
-    </div>
-    <div class="graph-frame">
-      <img src="/graph.svg.php" alt="Followers over time">
-    </div>
-  </section>
-</div>
+    <div class="network-grid">
+      <section class="kuz-panel network-card">
+        <div class="panel-title dynamic-invert">
+          <span class="panel-index">IN</span>
+          <div><p class="section-kicker">INBOUND</p><h2>FOLLOW BACK</h2></div>
+          <span class="panel-counter"><?=count($youDontFollowBack)?> TARGETS</span>
+        </div>
 
-<footer class="footer-line">THE KUZ NETWORK // BUILD LOCAL // KEEP CONTROL</footer>
+        <form method="post">
+          <input type="hidden" name="action" value="follow">
+          <div class="target-list">
+            <?php if (!$youDontFollowBack): ?>
+              <div class="target-item empty-state">NO ACCOUNTS TO FOLLOW BACK</div>
+            <?php else: ?>
+              <?php foreach ($youDontFollowBack as $u): ?>
+                <label class="target-item target-item--selectable"><input type="checkbox" name="users[]" value="<?=h($u)?>"><span><?=h($u)?></span></label>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+          <div class="form-actions">
+            <label class="dry-run"><input type="checkbox" name="dry"> DRY-RUN</label>
+            <button class="action-button" type="submit">FOLLOW SELECTED</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="kuz-panel network-card">
+        <div class="panel-title dynamic-invert">
+          <span class="panel-index">OUT</span>
+          <div><p class="section-kicker">OUTBOUND</p><h2>UNFOLLOW NON-MUTUAL</h2></div>
+          <span class="panel-counter"><?=count($theyDontFollowYou)?> TARGETS</span>
+        </div>
+
+        <form method="post">
+          <input type="hidden" name="action" value="unfollow">
+          <div class="target-list">
+            <?php if (!$theyDontFollowYou): ?>
+              <div class="target-item empty-state">NO NON-MUTUAL ACCOUNTS</div>
+            <?php else: ?>
+              <?php foreach ($theyDontFollowYou as $u): ?>
+                <label class="target-item target-item--selectable"><input type="checkbox" name="users[]" value="<?=h($u)?>"><span><?=h($u)?></span></label>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+          <div class="form-actions">
+            <label class="dry-run"><input type="checkbox" name="dry"> DRY-RUN</label>
+            <button class="action-button" type="submit">UNFOLLOW SELECTED</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="kuz-panel graph-card">
+        <div class="panel-title dynamic-invert">
+          <span class="panel-index">HIS</span>
+          <div><p class="section-kicker">HISTORY</p><h2>FOLLOWERS OVER TIME</h2></div>
+          <span class="panel-counter">180 DAYS MAX</span>
+        </div>
+        <div class="graph-frame"><img src="/graph.svg.php?v=3.0.0" alt="Followers over time"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer site-footer--dynamic" aria-label="KUZ Network footer">
+    <div class="site-footer__inner">
+      <p class="site-footer__text">THE KUZ NETWORK - @2026 / BUILD LOCAL / KEEP CONTROL / OWN THE STACK / KUZFOLLOW</p>
+    </div>
+  </footer>
 </div>
 
 <div id="events" class="modal" role="dialog" aria-modal="true" aria-labelledby="events-title">
-  <div class="box">
-    <div class="head">
-      <div>
-        <div class="eyebrow">PUBLIC ACTIVITY</div>
-        <h2 id="events-title">EVENTS</h2>
-      </div>
-      <button class="btn" type="button" onclick="closeEvents()">CLOSE</button>
+  <div class="modal__box">
+    <div class="modal__head">
+      <div><p class="section-kicker">PUBLIC ACTIVITY</p><h2 id="events-title">EVENTS</h2></div>
+      <button class="action-button" type="button" onclick="closeEvents()">CLOSE</button>
     </div>
-    <div class="body">
+    <div class="modal__body">
       <?php foreach (array_slice($events, 0, 30) as $e): ?>
-        <div class="item event-item">
-          <?=h((string)($e['type'] ?? 'Event'))?>
-          <div class="meta"><?=h((string)($e['repo']['name'] ?? ''))?></div>
+        <div class="event-item dynamic-invert">
+          <strong><?=h((string)($e['type'] ?? 'Event'))?></strong>
+          <span><?=h((string)($e['repo']['name'] ?? ''))?></span>
         </div>
       <?php endforeach; ?>
     </div>
@@ -314,9 +294,8 @@ if ($needsAppend) {
 </div>
 
 <script>
-function openEvents(){document.getElementById('events').classList.add('open')}
-function closeEvents(){document.getElementById('events').classList.remove('open')}
+function openEvents(){document.getElementById('events').classList.add('is-open')}
+function closeEvents(){document.getElementById('events').classList.remove('is-open')}
 </script>
-
 </body>
 </html>

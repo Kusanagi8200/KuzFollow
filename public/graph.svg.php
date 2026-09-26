@@ -53,10 +53,10 @@ if ($err !== null) {
     $size = is_file($historyPath) ? (string)filesize($historyPath) : 'N/A';
     ?>
 <svg xmlns="http://www.w3.org/2000/svg" width="<?= $W ?>" height="<?= $H ?>" viewBox="0 0 <?= $W ?> <?= $H ?>">
-  <rect x="0" y="0" width="<?= $W ?>" height="<?= $H ?>" fill="#070a0c" stroke="rgba(118,232,255,0.28)"/>
-  <text x="18" y="32" fill="#76e8ff" font-family="system-ui,Segoe UI,Roboto" font-size="13" letter-spacing="2">FOLLOWERS OVER TIME</text>
+  <rect x="0" y="0" width="<?= $W ?>" height="<?= $H ?>" fill="#000000" stroke="rgba(255,255,255,0.22)"/>
+  <text x="18" y="32" fill="#ffffff" font-family="system-ui,Segoe UI,Roboto" font-size="13" letter-spacing="2">FOLLOWERS OVER TIME</text>
   <text x="18" y="62" fill="#ffffff" font-family="ui-monospace,Menlo,Consolas" font-size="12"><?= esc("ERROR: ".$err) ?></text>
-  <text x="18" y="86" fill="#91a0a6" font-family="ui-monospace,Menlo,Consolas" font-size="11"><?= esc("USING: ".$historyPath." (".$size." bytes)") ?></text>
+  <text x="18" y="86" fill="#8f8f8f" font-family="ui-monospace,Menlo,Consolas" font-size="11"><?= esc("USING: ".$historyPath." (".$size." bytes)") ?></text>
 </svg>
 <?php
     exit;
@@ -96,7 +96,7 @@ $pill = function(float $x, float $y, string $text, int $fs = 12, string $fill = 
     $tY = $y + $fs + $padY - 2;
 
     return
-      '<rect x="'.round($x,2).'" y="'.round($y,2).'" width="'.$w.'" height="'.$h.'" rx="'.$rx.'" fill="rgba(255,255,255,0.025)" stroke="rgba(118,232,255,0.28)"/>'.
+      '<rect x="'.round($x,2).'" y="'.round($y,2).'" width="'.$w.'" height="'.$h.'" rx="'.$rx.'" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.22)"/>'.
       '<text x="'.round($tX,2).'" y="'.round($tY,2).'" fill="'.$fill.'" font-family="ui-monospace,Menlo,Consolas" font-size="'.$fs.'">'.esc($text).'</text>';
 };
 
@@ -111,8 +111,8 @@ $lp = $pts[$n-1];
 <svg xmlns="http://www.w3.org/2000/svg" width="<?= $W ?>" height="<?= $H ?>" viewBox="0 0 <?= $W ?> <?= $H ?>">
   <defs>
     <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="rgba(118,232,255,0.18)"/>
-      <stop offset="1" stop-color="rgba(118,232,255,0.015)"/>
+      <stop offset="0" stop-color="rgba(255,255,255,0.16)"/>
+      <stop offset="1" stop-color="rgba(255,255,255,0.01)"/>
     </linearGradient>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="2.6" result="b"/>
@@ -123,10 +123,10 @@ $lp = $pts[$n-1];
     </clipPath>
   </defs>
 
-  <rect x="0" y="0" width="<?= $W ?>" height="<?= $H ?>" fill="#070a0c" stroke="rgba(118,232,255,0.28)"/>
+  <rect x="0" y="0" width="<?= $W ?>" height="<?= $H ?>" fill="#000000" stroke="rgba(255,255,255,0.22)"/>
 
   <!-- Header outside the plot area -->
-  <text x="18" y="30" fill="#76e8ff" font-family="system-ui,Segoe UI,Roboto" font-size="13" letter-spacing="2">FOLLOWERS OVER TIME</text>
+  <text x="18" y="30" fill="#ffffff" font-family="system-ui,Segoe UI,Roboto" font-size="13" letter-spacing="2">FOLLOWERS OVER TIME</text>
   <?= $pill(18, 40, $rangeLabel, 12, '#ffffff') ?>
   <?= $pill($W-260, 40, $nowLabel, 12, '#ffffff') ?>
 
@@ -139,18 +139,18 @@ $lp = $pts[$n-1];
       $v = (int)round($maxV - (($maxV-$minV)*($g/4)));
   ?>
     <line x1="<?= $padL ?>" y1="<?= round($y,2) ?>" x2="<?= $padL+$plotW ?>" y2="<?= round($y,2) ?>" stroke="rgba(255,255,255,0.10)"/>
-    <text x="<?= $padL-12 ?>" y="<?= round($y+4,2) ?>" text-anchor="end" fill="#91a0a6" font-family="ui-monospace,Menlo,Consolas" font-size="11"><?= $v ?></text>
+    <text x="<?= $padL-12 ?>" y="<?= round($y+4,2) ?>" text-anchor="end" fill="#8f8f8f" font-family="ui-monospace,Menlo,Consolas" font-size="11"><?= $v ?></text>
   <?php endfor; ?>
 
   <!-- Clipped area and line -->
   <g clip-path="url(#clipPlot)">
     <path d="<?= esc($areaD) ?>" fill="url(#area)"/>
-    <polyline points="<?= $poly ?>" fill="none" stroke="#76e8ff" stroke-width="2.6" filter="url(#glow)"/>
+    <polyline points="<?= $poly ?>" fill="none" stroke="#ffffff" stroke-width="2.6" filter="url(#glow)"/>
   </g>
 
   <!-- Last point -->
-  <circle cx="<?= round($lp[0],2) ?>" cy="<?= round($lp[1],2) ?>" r="5.0" fill="#ffffff" stroke="#76e8ff" stroke-width="2"/>
+  <circle cx="<?= round($lp[0],2) ?>" cy="<?= round($lp[1],2) ?>" r="5.0" fill="#ffffff" stroke="#ffffff" stroke-width="2"/>
 
   <!-- Footer outside the plot area -->
-  <?= $pill(18, $H-44, "daily snapshot (UTC): {$todayUTC}", 11, '#91a0a6') ?>
+  <?= $pill(18, $H-44, "daily snapshot (UTC): {$todayUTC}", 11, '#8f8f8f') ?>
 </svg>
