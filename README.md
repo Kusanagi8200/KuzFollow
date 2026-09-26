@@ -1,4 +1,4 @@
-# KuzFollow — GitHub connections in Bash
+# KuzFollow - GitHub connections in Bash
 
 KuzFollow analyzes your GitHub followers and following, shows non-reciprocal
 connections, and offers explicitly confirmed follow/unfollow actions.
