@@ -15,12 +15,12 @@ $followers = $gh->followers($user);
 $N = count($followers);
 
 /* PARAMS */
-$points = 30;       // EXACTEMENT 30 points
-$incPerDay = 3;     // +3/jour
+$points = 30;       // Exactly 30 points
+$incPerDay = 3;     // +3 per day
 
 $tz = new DateTimeZone('UTC');
 $today = new DateTimeImmutable('today', $tz);              // 00:00 UTC
-$start = $today->sub(new DateInterval('P'.($points-1).'D')); // J-29 => 30 dates incl.
+$start = $today->sub(new DateInterval('P'.($points-1).'D')); // Day -29 gives 30 dates including today
 
 $startValue = $N - (($points-1) * $incPerDay);
 if ($startValue < 0) $startValue = 0;
@@ -33,11 +33,11 @@ for ($i = 0; $i < $points; $i++) {
   $hist[] = ['date' => $d, 'followers' => $v];
 }
 
-/* force dernier point = N */
+/* Force the last point to N */
 $hist[$points-1]['date'] = $today->format('Y-m-d');
 $hist[$points-1]['followers'] = $N;
 
-/* write */
+/* Write the history file */
 $dataDir = __DIR__ . '/../data';
 @mkdir($dataDir, 0755, true);
 $file = $dataDir . '/followers_history.json';

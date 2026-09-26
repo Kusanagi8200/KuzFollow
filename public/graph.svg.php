@@ -9,7 +9,7 @@ function esc(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8
 /* Canvas */
 $W = 980; $H = 300;
 
-/* Plot area (réserve header/footer => zéro chevauchement) */
+/* Plot area with reserved header and footer space to prevent overlap */
 $padL = 76;
 $padR = 22;
 $padT = 86;
@@ -127,7 +127,7 @@ $lp = $pts[$n-1];
 
   <rect x="0" y="0" width="<?= $W ?>" height="<?= $H ?>" fill="rgba(120,200,255,0.12)" stroke="rgba(120,220,255,0.55)"/>
 
-  <!-- Header (hors zone plot) -->
+  <!-- Header outside the plot area -->
   <text x="18" y="30" fill="#7fdcff" font-family="system-ui,Segoe UI,Roboto" font-size="13" letter-spacing="2">FOLLOWERS OVER TIME</text>
   <?= $pill(18, 40, $rangeLabel, 12, '#ffffff') ?>
   <?= $pill($W-260, 40, $nowLabel, 12, '#ffffff') ?>
@@ -144,7 +144,7 @@ $lp = $pts[$n-1];
     <text x="<?= $padL-12 ?>" y="<?= round($y+4,2) ?>" text-anchor="end" fill="#cfefff" font-family="ui-monospace,Menlo,Consolas" font-size="11"><?= $v ?></text>
   <?php endfor; ?>
 
-  <!-- Area + Line (clippés) -->
+  <!-- Clipped area and line -->
   <g clip-path="url(#clipPlot)">
     <path d="<?= esc($areaD) ?>" fill="url(#area)"/>
     <polyline points="<?= $poly ?>" fill="none" stroke="#33ccff" stroke-width="2.6" filter="url(#glow)"/>
@@ -153,6 +153,6 @@ $lp = $pts[$n-1];
   <!-- Last point -->
   <circle cx="<?= round($lp[0],2) ?>" cy="<?= round($lp[1],2) ?>" r="5.0" fill="#ffffff" stroke="#33ccff" stroke-width="2"/>
 
-  <!-- Footer (hors zone plot) -->
+  <!-- Footer outside the plot area -->
   <?= $pill(18, $H-44, "daily snapshot (UTC): {$todayUTC}", 11, '#cfefff') ?>
 </svg>
