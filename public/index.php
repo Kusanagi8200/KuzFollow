@@ -80,7 +80,7 @@ if ($needsAppend) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
-<link rel="stylesheet" href="/assets/style.css?v=3.0.0">
+<link rel="stylesheet" href="/assets/style.css?v=3.0.1">
 </head>
 <body>
 <div class="site-shell">
@@ -125,12 +125,12 @@ if ($needsAppend) {
     <?php endif; ?>
 
     <section class="section-title dynamic-invert" aria-labelledby="repo-section-title">
-      <span class="section-number">01</span>
-      <div>
-        <p class="section-kicker">CODE ACTIVITY</p>
+      <p class="section-kicker section-kicker--offset">CODE ACTIVITY</p>
+      <div class="section-heading-line">
+        <span class="section-number">01</span>
         <h2 id="repo-section-title">REPOSITORIES</h2>
-        <p class="section-description">Owner repositories ranked by latest commit activity.</p>
       </div>
+      <p class="section-description section-description--offset">Owner repositories ranked by latest commit activity.</p>
     </section>
 
     <section class="kuz-panel repo-panel">
@@ -199,12 +199,12 @@ if ($needsAppend) {
     </section>
 
     <section class="section-title dynamic-invert" aria-labelledby="network-section-title">
-      <span class="section-number">02</span>
-      <div>
-        <p class="section-kicker">NETWORK CONTROL</p>
+      <p class="section-kicker section-kicker--offset">NETWORK CONTROL</p>
+      <div class="section-heading-line">
+        <span class="section-number">02</span>
         <h2 id="network-section-title">FOLLOWERS &amp; FOLLOWING</h2>
-        <p class="section-description">Review reciprocity, apply selected changes, and monitor follower history.</p>
       </div>
+      <p class="section-description section-description--offset">Review reciprocity, apply selected changes, and monitor follower history.</p>
     </section>
 
     <div class="network-grid">
