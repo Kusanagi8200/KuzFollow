@@ -46,7 +46,31 @@ ui_metric() {
     printf '  %-22s %b%s%b\n' "$1" "$BOLD" "$2" "$NC"
 }
 
+terminal_width() {
+    local width=${COLUMNS:-}
+    if [[ ! $width =~ ^[0-9]{1,3}$ ]] && [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
+        width=$(tput cols 2>/dev/null) || width=''
+    fi
+    [[ $width =~ ^[0-9]{1,3}$ ]] || width=80
+    printf '%s\n' "$((10#$width))"
+}
+
+show_ascii_logo() {
+    printf '%b\n' "$BOLD$CYAN"
+    printf '%s\n' \
+        '███████╗ ██████╗ ██╗     ██╗      ██████╗ ██╗    ██╗███████╗██████╗ ███████╗' \
+        '██╔════╝██╔═══██╗██║     ██║     ██╔═══██╗██║    ██║██╔════╝██╔══██╗██╔════╝' \
+        '█████╗  ██║   ██║██║     ██║     ██║   ██║██║ █╗ ██║█████╗  ██████╔╝███████╗' \
+        '██╔══╝  ██║   ██║██║     ██║     ██║   ██║██║███╗██║██╔══╝  ██╔══██╗╚════██║' \
+        '██║     ╚██████╔╝███████╗███████╗╚██████╔╝╚███╔███╔╝███████╗██║  ██║███████║' \
+        '╚═╝      ╚═════╝ ╚══════╝╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚══════╝'
+    printf '%b' "$NC"
+}
+
 show_header() {
+    if (( $(terminal_width) >= 80 )); then
+        show_ascii_logo
+    fi
     ui_rule
     printf '%bKuzFollow | GitHub connections%b\n' "$BOLD$CYAN" "$NC"
     printf 'Analyze your network, then choose an action.\n'

@@ -1,122 +1,199 @@
-# KuzFollow - GitHub connections in Bash
+# KuzFollow
 
-KuzFollow analyzes your GitHub followers and following, shows non-reciprocal
-connections, and offers explicitly confirmed follow/unfollow actions.
-The terminal application and its tests are written only in Bash. It uses the
-existing `curl` and `jq` utilities; no additional application language is required.
+KuzFollow analyse les relations d'un compte GitHub : abonnés, abonnements,
+relations réciproques et comptes à suivre ou à ne plus suivre.
 
-## Terminal design
+Le dépôt contient deux applications indépendantes qui utilisent la même API
+GitHub :
 
-- Compact header instead of a large ASCII banner.
-- Aligned overview and connection counts, including mutual connections.
-- Separate target lists with counts and explicit empty states.
-- Menu returns after reviewing lists, invalid input, or cancelling an action.
-- `YES` is required for each batch operation; `q`, `4`, or Enter exits the menu.
-- Decorative separators use `COLUMNS` (maximum 72 columns).
-- Colors are disabled when output is redirected, `TERM=dumb`, or `NO_COLOR` is set.
-- When input or output is not a terminal, only a report is produced: no actions.
+| Version | Point d'entrée | Usage |
+| --- | --- | --- |
+| Terminal Bash | `KuzFollow.sh` | Analyse interactive depuis un terminal |
+| Web PHP | `public/index.php` | Tableau de bord accessible depuis un navigateur |
 
-Example (fictional data):
+La version terminal reste entièrement écrite en Bash. La version web existante
+utilise PHP, HTML, CSS et un petit script JavaScript intégré à la page.
+
+## Fonctionnalités communes
+
+- Récupération paginée des followers et des comptes suivis.
+- Détection des relations non réciproques.
+- Sélection des comptes à suivre ou à ne plus suivre.
+- Consultation des dépôts publics et de l'activité publique récente.
+- Utilisation d'un token GitHub conservé hors du dépôt.
+
+## Version terminal Bash
+
+### Interface
+
+Le logo ASCII historique est affiché dans les terminaux d'au moins 80 colonnes.
+Un en-tête compact prend automatiquement le relais dans un terminal plus étroit.
+Le tableau de bord affiche ensuite les statistiques alignées, les listes
+d'actions et le menu interactif.
 
 ```text
-KuzFollow | GitHub connections
-Analyze your network, then choose an action.
-
-Overview
-------------------------------------------------------------------------
-  Account                example
-  Name                   Example User
-  Public repositories    12
-
-Connections
-------------------------------------------------------------------------
-  Following              20
-  Followers              18
-  Mutual connections     15
-  Not following back     5
-  To follow back         3
-
-Actions
-------------------------------------------------------------------------
-  [1] Unfollow non-reciprocal accounts (5)
-  [2] Follow back followers (3)
-  [3] Review account lists
-  [4/q] Finish without changes
+███████╗ ██████╗ ██╗     ██╗      ██████╗ ██╗    ██╗███████╗██████╗ ███████╗
+██╔════╝██╔═══██╗██║     ██║     ██╔═══██╗██║    ██║██╔════╝██╔══██╗██╔════╝
+█████╗  ██║   ██║██║     ██║     ██║   ██║██║ █╗ ██║█████╗  ██████╔╝███████╗
+██╔══╝  ██║   ██║██║     ██║     ██║   ██║██║███╗██║██╔══╝  ██╔══██╗╚════██║
+██║     ╚██████╔╝███████╗███████╗╚██████╔╝╚███╔███╔╝███████╗██║  ██║███████║
+╚═╝      ╚═════╝ ╚══════╝╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚══════╝
 ```
 
-The full report also lists up to 15 public repositories, up to 10 public activity
-events, and the first 10 followers returned by the API. Follower dates are not
-shown: that endpoint does not supply account creation or follow dates.
+Le menu conserve les améliorations suivantes :
 
-## Requirements and installation
+- statistiques des relations réciproques ;
+- listes séparées avec compteurs et états vides explicites ;
+- retour au menu après une saisie invalide, une consultation ou une annulation ;
+- confirmation exacte `YES` avant une action groupée ;
+- arrêt sans action avec `4`, `q` ou Entrée ;
+- arrêt immédiat si les données de relations sont incomplètes ou invalides ;
+- rapport sans action lorsque l'entrée ou la sortie n'est pas un terminal ;
+- désactivation des couleurs avec `NO_COLOR=1`, `TERM=dumb` ou une redirection.
 
-Requires **Bash 4 or newer**, `curl`, `jq`, and standard system utilities
-(`head`, `date`, `sleep`). On macOS, use a newer Bash instead of the system Bash 3.
-GNU `date` formats event timestamps; otherwise the original timestamp is shown.
+### Prérequis
+
+- Bash 4 ou plus récent ;
+- `curl` ;
+- `jq` ;
+- les utilitaires système `head`, `date` et `sleep`.
+
+Sur macOS, installez une version récente de Bash au lieu d'utiliser Bash 3
+fourni par défaut.
+
+### Installation et lancement
 
 ```bash
 git clone https://github.com/Kusanagi8200/KuzFollow.git
 cd KuzFollow
-bash --version
-command -v curl
-command -v jq
-bash KuzFollow.sh --help
-```
 
-The repository is private, so cloning requires an authorized GitHub session.
-On Debian/Ubuntu, install missing dependencies with `sudo apt install bash curl jq`.
-
-## Configuration and usage
-
-Set the username and token through environment variables. The token must belong
-to the account whose relationships you intend to change. Use a token authorized
-to follow users (for a classic PAT, `user:follow`).
-
-Enter the token silently so it does not appear in command history:
-
-```bash
 export GITHUB_USER="your_username"
 read -r -s -p 'GitHub token: ' GITHUB_TOKEN
 printf '\n'
 export GITHUB_TOKEN
+
 bash KuzFollow.sh
 unset GITHUB_TOKEN
 ```
 
-Never put a real token in the script, README, screenshots, or test fixtures.
-Do not run the application with shell tracing (`bash -x`).
+Le token doit appartenir au compte géré et autoriser les actions follow et
+unfollow. Pour un token classique, utilisez la permission `user:follow`.
+
+Commandes utiles :
 
 ```bash
-# Plain terminal output
+# Aide sans appel à l'API
+bash KuzFollow.sh --help
+
+# Affichage sans couleurs
 NO_COLOR=1 bash KuzFollow.sh
 
-# Read-only report (no menu actions, no ANSI color codes)
+# Rapport non interactif, sans action sur les relations
 bash KuzFollow.sh > report.txt
-
-# Offline help
-bash KuzFollow.sh --help
 ```
 
-`GITHUB_USER` and `GITHUB_TOKEN` are required for analysis. `PER_PAGE=100` remains
-the API page size in the script. No configuration file is necessary.
+Après une action groupée, relancez le script pour actualiser les statistiques.
+Les requêtes d'action sont espacées d'une seconde. Le script n'effectue pas de
+nouvelle tentative automatique en cas de limite API ou d'erreur réseau.
 
-## Actions and error handling
+## Version web PHP
 
-Review the two account lists before choosing `[1]` (unfollow) or `[2]` (follow).
-Only an exact `YES` confirms the batch. Any other answer cancels and returns to
-the menu. After a batch, rerun the script to refresh the counts.
+### Fonctionnalités
 
-Relationship retrieval stops on HTTP/transport errors, invalid JSON, or invalid
-list data, including failure on a later page. No action menu is offered after
-such a failure. Check connectivity, token permissions, and API availability,
-then rerun. Do not print the token when troubleshooting.
+Le tableau de bord web fournit :
 
-Batch requests have a one-second delay and success/failure summaries. There are
-**no automatic retries or automatic rate-limit recovery**. Some optional profile,
-repository, or activity information can be unavailable; this is not proof that
-an account has no data. The script does not store follower history.
+- les nombres de followers, abonnements et dépôts ;
+- les 10 premiers followers renvoyés par l'API ;
+- les dépôts du propriétaire triés par mise à jour ;
+- les 30 événements publics récents dans une fenêtre dédiée ;
+- la sélection individuelle des comptes à suivre ;
+- la sélection individuelle des comptes non réciproques à ne plus suivre ;
+- un mode `DRY-RUN` qui affiche l'action et les cibles sans appeler l'action API ;
+- un historique quotidien limité à 180 points ;
+- un graphique SVG généré par `public/graph.svg.php`.
 
-## Offline regression tests
+La version web est indépendante du script Bash. Elle utilise
+`src/GitHubClient.php` pour appeler l'API GitHub et écrit l'historique dans
+`data/followers_history.json`.
+
+### Prérequis
+
+- PHP 7.4 ou plus récent ;
+- extension PHP cURL ;
+- extension PHP JSON ;
+- sessions PHP ;
+- serveur web Apache avec `mod_rewrite`, ou une configuration équivalente ;
+- accès HTTPS recommandé ;
+- droit d'écriture du processus PHP sur le dossier `data/`.
+
+Le document root du site doit pointer vers le dossier `public/`. Le fichier
+`public/.htaccess` redirige les routes vers `public/index.php` sous Apache.
+
+### Configuration
+
+La version PHP lit sa configuration dans
+`/etc/kuzfollow/config.php`. Ce fichier reste hors du dépôt et hors du document
+root.
+
+```php
+<?php
+return [
+    'github_user' => 'your_username',
+    'github_token' => 'your_token',
+];
+```
+
+Exemple de préparation sur un serveur Linux :
+
+```bash
+sudo install -d -m 750 /etc/kuzfollow
+sudo editor /etc/kuzfollow/config.php
+sudo chown -R www-data:www-data data
+sudo chmod 750 data
+```
+
+Adaptez `www-data` à l'utilisateur réel de PHP-FPM ou du serveur web.
+Ne publiez jamais le fichier de configuration et ne placez jamais un vrai token
+dans le dépôt.
+
+Pour un test local avec le serveur intégré de PHP :
+
+```bash
+php -S 127.0.0.1:8080 -t public
+```
+
+Ouvrez ensuite `http://127.0.0.1:8080/`. La configuration absolue
+`/etc/kuzfollow/config.php` doit déjà exister.
+
+### Historique et graphique
+
+À chaque chargement du tableau de bord, `public/index.php` ajoute au maximum un
+point par jour à l'historique et conserve les 180 derniers points.
+
+`public/seed_history.php` est un outil d'initialisation facultatif. Il remplace
+l'historique par 30 points synthétiques se terminant par le nombre réel de
+followers du jour :
+
+```bash
+php public/seed_history.php
+```
+
+N'exécutez cette commande que si vous souhaitez réinitialiser volontairement le
+fichier d'historique.
+
+### Protection de l'interface
+
+L'interface PHP peut modifier les relations GitHub et ne contient pas de système
+de connexion intégré. Placez-la derrière une authentification du serveur web ou
+du proxy inverse et limitez son accès aux personnes autorisées. Utilisez
+`DRY-RUN` pour contrôler les cibles avant une action réelle.
+
+## Tests
+
+### Bash
+
+La suite hors ligne intercepte toutes les requêtes HTTP. Elle ne suit et ne
+retire aucun compte réel.
 
 ```bash
 bash -n KuzFollow.sh
@@ -124,19 +201,38 @@ bash -n tests/test_ui.sh
 bash tests/test_ui.sh
 ```
 
-The Bash test suite replaces HTTP requests with fixtures. It checks counts,
-pagination, API failures, read-only reports, follow/unfollow response handling,
-empty lists, terminal widths, colors, menu navigation, cancellation, confirmation,
-and end-of-input behavior. Interactive checks use `script` (util-linux) and
-`timeout` on Linux. No real account is followed or unfollowed during these tests.
+Elle couvre notamment la pagination, les erreurs API, les rapports non
+interactifs, les largeurs de terminal, le logo ASCII, les couleurs, le menu, les
+annulations et les confirmations.
 
-## Repository structure
+### PHP
 
-- `KuzFollow.sh`: standalone Bash terminal application.
-- `tests/test_ui.sh`: offline Bash regression tests.
-- `public/`, `src/`, `data/`: pre-existing separate web interface and its data.
-  They are not required by the Bash application and were not migrated or modified
-  as part of this terminal redesign.
+Vérification de syntaxe des fichiers PHP :
 
-Local timestamped backups are kept outside the application directory before
-editing; they are not published with the source changes.
+```bash
+php -l public/index.php
+php -l public/graph.svg.php
+php -l public/seed_history.php
+php -l src/GitHubClient.php
+```
+
+Les tests fonctionnels PHP nécessitent un fichier de configuration valide, un
+accès réseau à l'API GitHub et un dossier `data/` accessible en écriture.
+
+## Structure du dépôt
+
+```text
+KuzFollow.sh                 Application terminal Bash
+tests/test_ui.sh             Tests hors ligne de la version Bash
+public/index.php             Tableau de bord web PHP
+public/graph.svg.php         Graphique SVG de l'historique
+public/seed_history.php      Initialisation facultative de l'historique
+public/assets/style.css      Design de l'interface web
+public/assets/bg.jpg         Image de fond de l'interface web
+public/.htaccess             Réécriture des routes Apache
+src/GitHubClient.php         Client de l'API GitHub pour PHP
+data/followers_history.json  Historique utilisé par le graphique
+```
+
+Les fichiers `.bk` présents dans le dépôt sont des copies historiques de
+certains fichiers PHP, CSS et de données.

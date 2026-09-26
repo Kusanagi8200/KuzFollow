@@ -85,11 +85,14 @@ contains "$output" '1' failures
 pass 'Mass action failure summary'
 output=$(NO_COLOR=1 COLUMNS=32 bash tests/test_ui.sh --color)
 [[ $output != *$'\033'* ]] || fail NO_COLOR
+[[ $output != *'███████╗'* ]] || fail 'wide logo in narrow terminal'
 rule=$(COLUMNS=32 ui_rule)
 [[ ${#rule} == 32 ]] || fail width
 rule=$(COLUMNS=bogus ui_rule)
 [[ ${#rule} == 72 ]] || fail fallback
-pass 'NO_COLOR and narrow/invalid terminal widths'
+output=$(NO_COLOR=1 COLUMNS=100 bash tests/test_ui.sh --color)
+contains "$output" '███████╗ ██████╗' 'restored ASCII logo'
+pass 'ASCII logo, NO_COLOR and terminal widths'
 output=$(show_accounts Empty)
 contains "$output" 'None.' empty
 pass 'Empty list state'
