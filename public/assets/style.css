@@ -218,8 +218,8 @@ a{color:inherit;text-decoration:none}
 
 .section-title h2{
   margin:4px 0 0;
-  font-size:clamp(1.8rem,3vw,3.25rem);
-  line-height:.98;
+  font-size:clamp(1.65rem,2.25vw,2.5rem);
+  line-height:1;
   letter-spacing:-.035em;
   text-transform:uppercase;
 }
