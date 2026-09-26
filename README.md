@@ -32,22 +32,6 @@ section.
 
 ## <kbd>BASH TERMINAL VERSION</kbd>
 
-### <kbd>INTERFACE</kbd>
-
-The historical ASCII logo is displayed in terminals that are at least 80
-columns wide. A compact header is used automatically in narrower terminals.
-The dashboard then displays aligned statistics, action lists, and an
-interactive menu.
-
-```text
-███████╗ ██████╗ ██╗     ██╗      ██████╗ ██╗    ██╗███████╗██████╗ ███████╗
-██╔════╝██╔═══██╗██║     ██║     ██╔═══██╗██║    ██║██╔════╝██╔══██╗██╔════╝
-█████╗  ██║   ██║██║     ██║     ██║   ██║██║ █╗ ██║█████╗  ██████╔╝███████╗
-██╔══╝  ██║   ██║██║     ██║     ██║   ██║██║███╗██║██╔══╝  ██╔══██╗╚════██║
-██║     ╚██████╔╝███████╗███████╗╚██████╔╝╚███╔███╔╝███████╗██║  ██║███████║
-╚═╝      ╚═════╝ ╚══════╝╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚══════╝
-```
-
 The menu retains the following UX and safety improvements:
 
 - mutual connection statistics;
@@ -208,8 +192,8 @@ bash tests/test_ui.sh
 ```
 
 The suite covers pagination, API errors, non-interactive reports, terminal
-widths, the ASCII logo, colors, menu navigation, cancellation, confirmation,
-and end-of-input behavior.
+widths, colors, menu navigation, cancellation, confirmation, and end-of-input
+behavior.
 
 ### <kbd>PHP</kbd>
 
@@ -246,4 +230,3 @@ and data files.
 ---
 
 #### **`THE KUZ NETWORK - KUSANAGI8200 - @2026`**
-
