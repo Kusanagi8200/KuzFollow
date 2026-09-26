@@ -5,8 +5,8 @@
 # =============================================================================
 
 # --- CONFIGURATION ---
-GITHUB_USER="USER"
-GITHUB_TOKEN="YOURTOKENGITHUB"
+GITHUB_USER="${GITHUB_USER:-}"
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 PER_PAGE=100
 
 # --- COLORS ---
@@ -20,23 +20,104 @@ WHITE='\033[1;37m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# --- ASCII ART ---
-show_header() {
-    echo -e "${CYAN}${BOLD}"
-    echo "███████╗ ██████╗ ██╗     ██╗      ██████╗ ██╗    ██╗███████╗██████╗ ███████╗"
-    echo "██╔════╝██╔═══██╗██║     ██║     ██╔═══██╗██║    ██║██╔════╝██╔══██╗██╔════╝"
-    echo "█████╗  ██║   ██║██║     ██║     ██║   ██║██║ █╗ ██║█████╗  ██████╔╝███████╗"
-    echo "██╔══╝  ██║   ██║██║     ██║     ██║   ██║██║███╗██║██╔══╝  ██╔══██╗╚════██║"
-    echo "██║     ╚██████╔╝███████╗███████╗╚██████╔╝╚███╔███╔╝███████╗██║  ██║███████║"
-    echo "╚═╝      ╚═════╝ ╚══════╝╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚═╝  ╚═╝╚══════╝"
-    echo -e "${NC}"
-    echo -e "${PURPLE}${BOLD}════════════════════════════════════════════════════════════════════════════════${NC}"
-    echo -e "${WHITE}${BOLD}                      GITHUB FOLLOWERS ANALYZER                               ${NC}"
-    echo -e "${PURPLE}${BOLD}════════════════════════════════════════════════════════════════════════════════${NC}"
-    echo
+# --- TERMINAL UI (Bash only) ---
+init_ui() {
+    if [[ ! -t 1 || ${TERM:-dumb} == dumb || -n ${NO_COLOR+x} ]]; then
+        RED='' GREEN='' YELLOW='' BLUE='' PURPLE='' CYAN='' WHITE='' BOLD='' NC=''
+    fi
 }
 
-# --- SPINNER FUNCTION ---
+ui_rule() {
+    local width=${COLUMNS:-72} line
+    [[ $width =~ ^[0-9]{1,3}$ ]] || width=72
+    width=$((10#$width))
+    ((width > 72)) && width=72
+    ((width < 1)) && width=1
+    printf -v line '%*s' "$width" ''
+    printf '%b%s%b\n' "$CYAN" "${line// /-}" "$NC"
+}
+
+ui_section() {
+    printf '\n%b%s%b\n' "$BOLD$CYAN" "$1" "$NC"
+    ui_rule
+}
+
+ui_metric() {
+    printf '  %-22s %b%s%b\n' "$1" "$BOLD" "$2" "$NC"
+}
+
+show_header() {
+    ui_rule
+    printf '%bKuzFollow | GitHub connections%b\n' "$BOLD$CYAN" "$NC"
+    printf 'Analyze your network, then choose an action.\n'
+    ui_rule
+}
+
+show_accounts() {
+    local title=$1 user
+    shift
+    ui_section "$title ($#)"
+    if (($# == 0)); then
+        printf '  None. Everything is up to date.\n'
+    else
+        for user in "$@"; do printf '  - %s\n' "$user"; done
+    fi
+}
+
+action_menu() {
+    local choice confirm
+    if [[ ! -t 0 || ! -t 1 ]]; then
+        printf '\nReport only: use an interactive terminal for actions.\n'
+        return 0
+    fi
+    while true; do
+        ui_section 'Actions'
+        ((unfollowed_count > 0)) &&
+            printf '  [1] Unfollow non-reciprocal accounts (%s)\n' "$unfollowed_count"
+        ((not_followed_back_count > 0)) &&
+            printf '  [2] Follow back followers (%s)\n' "$not_followed_back_count"
+        printf '  [3] Review account lists\n  [4/q] Finish without changes\n\n'
+        IFS= read -r -p 'Your choice: ' choice || return 0
+        case $choice in
+            1|2)
+                if [[ $choice == 1 ]]; then
+                    ((unfollowed_count > 0)) || { printf 'No accounts to unfollow.\n'; continue; }
+                    printf 'Unfollow %s accounts listed above.\n' "$unfollowed_count"
+                else
+                    ((not_followed_back_count > 0)) || { printf 'No accounts to follow.\n'; continue; }
+                    printf 'Follow %s accounts listed above.\n' "$not_followed_back_count"
+                fi
+                IFS= read -r -p 'Type YES to confirm (Enter cancels): ' confirm || return 0
+                if [[ $confirm != YES ]]; then
+                    printf 'Cancelled. No changes made.\n'
+                    continue
+                fi
+                if [[ $choice == 1 ]]; then
+                    mass_unfollow "${unfollowed_users[@]}"
+                else
+                    mass_follow "${not_followed_back_users[@]}"
+                fi
+                printf 'Run KuzFollow again to refresh the analysis.\n'
+                return 0
+                ;;
+            3)
+                show_accounts 'Not following you back' "${unfollowed_users[@]}"
+                show_accounts 'Followers to follow back' "${not_followed_back_users[@]}"
+                ;;
+            4|q|Q|'') printf 'No changes made.\n'; return 0 ;;
+            *) printf 'Invalid choice. Choose an available number or q.\n' ;;
+        esac
+    done
+}
+
+show_help() {
+    printf '%s\n' \
+        'Usage: bash KuzFollow.sh [--help]' \
+        'Set GITHUB_USER and GITHUB_TOKEN in your environment.' \
+        'Requires Bash 4+, curl and jq. Never store your token in the script.' \
+        'NO_COLOR=1 disables colors. Redirected output is a read-only report.'
+}
+
 spinner() {
     local pid=$1
     local delay=0.1
@@ -177,7 +258,7 @@ get_detailed_followers() {
         local response=$(curl -s -u "$GITHUB_USER:$GITHUB_TOKEN" \
             "https://api.github.com/users/$GITHUB_USER/followers?per_page=$PER_PAGE&page=$page" 2>/dev/null)
         
-        if [[ -z "$response" ]] || ! echo "$response" | jq . >/dev/null 2>&1; then
+        if [[ -z "$response" ]] || ! echo "$response" | jq -e 'type == "array"' >/dev/null 2>&1; then
             break
         fi
         
@@ -199,7 +280,7 @@ get_all_repos() {
         local response=$(curl -s -u "$GITHUB_USER:$GITHUB_TOKEN" \
             "https://api.github.com/users/$GITHUB_USER/repos?type=public&per_page=$PER_PAGE&page=$page" 2>/dev/null)
         
-        if [[ -z "$response" ]] || ! echo "$response" | jq . >/dev/null 2>&1; then
+        if [[ -z "$response" ]] || ! echo "$response" | jq -e 'type == "array"' >/dev/null 2>&1; then
             echo -e "${RED}${BOLD}ERROR: INVALID REPOS API RESPONSE${NC}" >&2
             break
         fi
@@ -223,13 +304,14 @@ get_all_users() {
     local all_users=()
     
     while true; do
-        local response=$(curl -s -u "$GITHUB_USER:$GITHUB_TOKEN" \
-            "https://api.github.com/users/$GITHUB_USER/$endpoint?per_page=$PER_PAGE&page=$page" 2>/dev/null)
+        local response
+        response=$(curl -fsS -u "$GITHUB_USER:$GITHUB_TOKEN" \
+            "https://api.github.com/users/$GITHUB_USER/$endpoint?per_page=$PER_PAGE&page=$page" 2>/dev/null) || return 1
         
         # Check if response is valid
-        if [[ -z "$response" ]] || ! echo "$response" | jq . >/dev/null 2>&1; then
+        if [[ -z "$response" ]] || ! echo "$response" | jq -e 'type == "array" and all(.[]; (.login | type == "string") and (.login | test("^[A-Za-z0-9-]+$")))' >/dev/null 2>&1; then
             echo -e "${RED}${BOLD}ERROR: INVALID API RESPONSE${NC}" >&2
-            break
+            return 1
         fi
         
         local count=$(echo "$response" | jq length 2>/dev/null)
@@ -246,6 +328,20 @@ get_all_users() {
 
 # --- MAIN FUNCTION ---
 main() {
+    case ${1:-} in
+        -h|--help) show_help; return 0 ;;
+        '') ;;
+        *) show_help >&2; return 2 ;;
+    esac
+    init_ui
+    if ((BASH_VERSINFO[0] < 4)); then
+        printf 'ERROR: Bash 4 or newer is required.\n' >&2
+        return 1
+    fi
+    if [[ -z $GITHUB_USER || -z $GITHUB_TOKEN ]]; then
+        printf 'ERROR: Set GITHUB_USER and GITHUB_TOKEN first; see --help.\n' >&2
+        return 1
+    fi
     show_header
     
     # Check dependencies
@@ -286,12 +382,21 @@ main() {
     
     # Fetch data
     echo -e "${YELLOW}${BOLD}FETCHING ACCOUNTS YOU FOLLOW...${NC}"
-    following_list=($(get_all_users "following"))
+    local following_data followers_data
+    following_data=$(get_all_users "following") || {
+        printf 'ERROR: Following list unavailable; no actions offered.\n' >&2
+        return 1
+    }
+    following_list=($following_data)
     echo -e "${GREEN}✓ ${#following_list[@]} ACCOUNTS RETRIEVED${NC}"
     echo
     
     echo -e "${YELLOW}${BOLD}FETCHING ACCOUNTS THAT FOLLOW YOU...${NC}"
-    followers_list=($(get_all_users "followers"))
+    followers_data=$(get_all_users "followers") || {
+        printf 'ERROR: Followers list unavailable; no actions offered.\n' >&2
+        return 1
+    }
+    followers_list=($followers_data)
     echo -e "${GREEN}✓ ${#followers_list[@]} FOLLOWERS RETRIEVED${NC}"
     echo
     
@@ -333,137 +438,30 @@ main() {
         fi
     done
     
-    # Display results
-    echo -e "${PURPLE}${BOLD}═══════════════════════════════════════════════════════════════════════════════${NC}"
-    echo -e "${WHITE}${BOLD}                                RESULTS                                        ${NC}"
-    echo -e "${PURPLE}${BOLD}═══════════════════════════════════════════════════════════════════════════════${NC}"
-    echo
-    echo -e "${CYAN}${BOLD}USER INFORMATION:${NC}"
-    echo -e "${WHITE}• USERNAME        : ${GREEN}${BOLD}${GITHUB_USER}${NC}"
-    echo -e "${WHITE}• DISPLAY NAME    : ${GREEN}${BOLD}${user_name}${NC}"
-    echo -e "${WHITE}• PUBLIC REPOS    : ${GREEN}${BOLD}${#repos_list[@]}${NC} ${WHITE}REPOSITORIES${NC}"
-    echo
-    echo -e "${CYAN}${BOLD}FOLLOW STATISTICS:${NC}"
-    echo -e "${WHITE}• YOU FOLLOW      : ${GREEN}${BOLD}${#following_list[@]}${NC} ${WHITE}ACCOUNTS${NC}"
-    echo -e "${WHITE}• FOLLOW YOU      : ${GREEN}${BOLD}${#followers_list[@]}${NC} ${WHITE}ACCOUNTS${NC}"
-    echo -e "${WHITE}• DON'T FOLLOW BACK : ${RED}${BOLD}${unfollowed_count}${NC} ${WHITE}ACCOUNTS${NC}"
-    echo -e "${WHITE}• YOU DON'T FOLLOW BACK : ${BLUE}${BOLD}${not_followed_back_count}${NC} ${WHITE}ACCOUNTS${NC}"
-    echo
-    
-    # Display accounts you follow but don't follow you back
-    if [[ $unfollowed_count -gt 0 ]]; then
-        echo -e "${RED}${BOLD}ACCOUNTS THAT DON'T FOLLOW YOU BACK:${NC}"
-        echo -e "${RED}${BOLD}════════════════════════════════════════${NC}"
-        
-        for user in "${unfollowed_users[@]}"; do
-            echo -e "${YELLOW}• ${WHITE}${user}${NC}"
-        done
-        echo
-    fi
-    
-    # Display followers you don't follow back
-    if [[ $not_followed_back_count -gt 0 ]]; then
-        echo -e "${BLUE}${BOLD}FOLLOWERS YOU DON'T FOLLOW BACK:${NC}"
-        echo -e "${BLUE}${BOLD}═══════════════════════════════════${NC}"
-        
-        for user in "${not_followed_back_users[@]}"; do
-            echo -e "${CYAN}• ${WHITE}${user}${NC}"
-        done
-        echo
-    fi
-    
-    # Interactive menu
-    if [[ $unfollowed_count -gt 0 ]] || [[ $not_followed_back_count -gt 0 ]]; then
-        echo -e "${PURPLE}${BOLD}ACTION MENU:${NC}"
-        echo -e "${WHITE}What would you like to do?${NC}"
-        echo
-        
-        if [[ $unfollowed_count -gt 0 ]]; then
-            echo -e "${CYAN}[1]${NC} Unfollow accounts that don't follow you back (${RED}${unfollowed_count}${NC} accounts)"
-        fi
-        
-        if [[ $not_followed_back_count -gt 0 ]]; then
-            echo -e "${CYAN}[2]${NC} Follow back your followers (${BLUE}${not_followed_back_count}${NC} accounts)"
-        fi
-        
-        echo -e "${CYAN}[3]${NC} Show detailed lists again"
-        echo -e "${CYAN}[4]${NC} Do nothing and exit"
-        echo
-        
-        read -p "Enter your choice [1-4]: " choice
-        echo
-        
-        case $choice in
-            1)
-                if [[ $unfollowed_count -gt 0 ]]; then
-                    echo -e "${RED}${BOLD}⚠️  WARNING: THIS WILL UNFOLLOW ${unfollowed_count} ACCOUNTS! ⚠️${NC}"
-                    echo -e "${WHITE}Are you absolutely sure? This action cannot be undone easily.${NC}"
-                    read -p "Type 'YES' to confirm: " confirm
-                    echo
-                    
-                    if [[ "$confirm" == "YES" ]]; then
-                        mass_unfollow "${unfollowed_users[@]}"
-                    else
-                        echo -e "${YELLOW}${BOLD}OPERATION CANCELLED${NC}"
-                        echo
-                    fi
-                else
-                    echo -e "${RED}${BOLD}NO ACCOUNTS TO UNFOLLOW${NC}"
-                fi
-                ;;
-            2)
-                if [[ $not_followed_back_count -gt 0 ]]; then
-                    echo -e "${GREEN}${BOLD}🎯 READY TO FOLLOW ${not_followed_back_count} ACCOUNTS!${NC}"
-                    echo -e "${WHITE}This will follow back all your followers that you're not following yet.${NC}"
-                    read -p "Type 'YES' to confirm: " confirm
-                    echo
-                    
-                    if [[ "$confirm" == "YES" ]]; then
-                        mass_follow "${not_followed_back_users[@]}"
-                    else
-                        echo -e "${YELLOW}${BOLD}OPERATION CANCELLED${NC}"
-                        echo
-                    fi
-                else
-                    echo -e "${GREEN}${BOLD}NO NEW FOLLOWERS TO FOLLOW BACK${NC}"
-                fi
-                ;;
-            3)
-                if [[ $unfollowed_count -gt 0 ]]; then
-                    echo -e "${RED}${BOLD}ACCOUNTS THAT DON'T FOLLOW YOU BACK:${NC}"
-                    for user in "${unfollowed_users[@]}"; do
-                        echo -e "${YELLOW}• ${WHITE}${user}${NC}"
-                    done
-                    echo
-                fi
-                
-                if [[ $not_followed_back_count -gt 0 ]]; then
-                    echo -e "${BLUE}${BOLD}FOLLOWERS YOU DON'T FOLLOW BACK:${NC}"
-                    for user in "${not_followed_back_users[@]}"; do
-                        echo -e "${CYAN}• ${WHITE}${user}${NC}"
-                    done
-                    echo
-                fi
-                ;;
-            4)
-                echo -e "${GREEN}${BOLD}NO CHANGES MADE${NC}"
-                echo
-                ;;
-            *)
-                echo -e "${RED}${BOLD}INVALID CHOICE - NO ACTION TAKEN${NC}"
-                echo
-                ;;
-        esac
-        
+    # Summary first, followed by the exact action targets.
+    ui_section 'Overview'
+    ui_metric 'Account' "$GITHUB_USER"
+    ui_metric 'Name' "$user_name"
+    ui_metric 'Public repositories' "${#repos_list[@]}"
+    ui_section 'Connections'
+    ui_metric 'Following' "${#following_list[@]}"
+    ui_metric 'Followers' "${#followers_list[@]}"
+    ui_metric 'Mutual connections' "$((${#following_list[@]} - unfollowed_count))"
+    ui_metric 'Not following back' "$unfollowed_count"
+    ui_metric 'To follow back' "$not_followed_back_count"
+    show_accounts 'Not following you back' "${unfollowed_users[@]}"
+    show_accounts 'Followers to follow back' "${not_followed_back_users[@]}"
+
+    if ((unfollowed_count > 0 || not_followed_back_count > 0)); then
+        action_menu
     else
-        echo -e "${GREEN}${BOLD}PERFECT BALANCE! ALL YOUR FOLLOWINGS FOLLOW YOU BACK AND YOU FOLLOW ALL YOUR FOLLOWERS!${NC}"
-        echo
+        printf '\nAll connections are mutual. No action needed.\n'
     fi
-    
+
     # Display simple repositories list
     if [[ ${#repos_list[@]} -gt 0 ]]; then
         echo -e "${BLUE}${BOLD}PUBLIC REPOSITORIES (${#repos_list[@]} TOTAL):${NC}"
-        echo -e "${BLUE}${BOLD}════════════════════════════════════${NC}"
+        ui_rule
         
         # Show first 15 repos, then summarize
         local displayed=0
@@ -486,7 +484,7 @@ main() {
     # Display recent events
     if [[ -n "$events_data" ]]; then
         echo -e "${PURPLE}${BOLD}RECENT ACTIVITY EVENTS:${NC}"
-        echo -e "${PURPLE}${BOLD}═══════════════════════${NC}"
+        ui_rule
         
         while IFS='|' read -r event_type date repo_name; do
             local formatted_date=$(date -d "${date}" '+%Y-%m-%d %H:%M' 2>/dev/null || echo "${date}")
@@ -513,21 +511,22 @@ main() {
     
     # Display detailed followers info
     if [[ -n "$detailed_followers_data" ]]; then
-        echo -e "${CYAN}${BOLD}RECENT FOLLOWERS (LAST 10):${NC}"
-        echo -e "${CYAN}${BOLD}════════════════════════════${NC}"
+        echo -e "${CYAN}${BOLD}FOLLOWERS (FIRST 10):${NC}"
+        ui_rule
         
         echo "$detailed_followers_data" | head -10 | while IFS='|' read -r login created_at; do
-            local join_date=$(date -d "${created_at}" '+%Y-%m-%d' 2>/dev/null || echo "${created_at}")
-            echo -e "${WHITE}👤 ${GREEN}${login}${NC} - Joined GitHub: ${BLUE}${join_date}${NC}"
+            printf '  - %s\n' "$login"
         done
         echo
     fi
     
     echo
-    echo -e "${PURPLE}${BOLD}═══════════════════════════════════════════════════════════════════════════════${NC}"
+    ui_rule
     echo -e "${GREEN}${BOLD}ANALYSIS COMPLETED!${NC}"
-    echo -e "${PURPLE}${BOLD}═══════════════════════════════════════════════════════════════════════════════${NC}"
+    ui_rule
 }
 
 # --- EXECUTION ---
-main "$@"
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+    main "$@"
+fi
